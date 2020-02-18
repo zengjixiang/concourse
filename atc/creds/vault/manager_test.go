@@ -137,8 +137,8 @@ var _ = Describe("VaultManager", func() {
 			fakeVault.StartTLS()
 
 			config = map[string]interface{}{
-				"url":                  fakeVault.URL,
-				"path_prefix":          "/path-prefix",
+				"url":         fakeVault.URL,
+				"path_prefix": "/path-prefix",
 				"lookup_templates": []string{
 					"/what/{{.Team}}/blah/{{.Pipeline}}/{{.Secret}}",
 					"/thing/{{.Team}}/{{.Secret}}",

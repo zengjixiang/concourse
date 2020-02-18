@@ -123,7 +123,7 @@ var _ = Describe("Handler", func() {
 				Expect(response).Should(IncludeHeaderEntries(expectedHeaderEntries))
 
 				expectedHeaderEntries = map[string]string{
-					"Connection":        "keep-alive",
+					"Connection": "keep-alive",
 				}
 				Expect(response).ShouldNot(IncludeHeaderEntries(expectedHeaderEntries))
 

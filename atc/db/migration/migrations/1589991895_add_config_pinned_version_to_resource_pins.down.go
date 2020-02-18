@@ -20,4 +20,3 @@ func (self *migrations) Down_1585079293() error {
 
 	return tx.Commit()
 }
-

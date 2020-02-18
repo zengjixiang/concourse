@@ -359,7 +359,6 @@ func (c *Container) setupContainerdProcSpec(gdnProcSpec garden.ProcessSpec, cont
 		}
 	}
 
-
 	if gdnProcSpec.User != "" {
 		var ok bool
 		var err error

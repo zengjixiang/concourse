@@ -14,16 +14,15 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-
 type VaultManager struct {
 	URL string `mapstructure:"url" long:"url" description:"Vault server address used to access secrets."`
 
-	PathPrefix      string `mapstructure:"path_prefix" long:"path-prefix" default:"/concourse" description:"Path under which to namespace credential lookup."`
+	PathPrefix      string   `mapstructure:"path_prefix" long:"path-prefix" default:"/concourse" description:"Path under which to namespace credential lookup."`
 	LookupTemplates []string `mapstructure:"lookup_templates" long:"lookup-templates" default:"/{{.Team}}/{{.Pipeline}}/{{.Secret}}" default:"/{{.Team}}/{{.Secret}}" description:"Path templates for credential lookup"`
-	SharedPath      string `mapstructure:"shared_path" long:"shared-path" description:"Path under which to lookup shared credentials."`
-	Namespace       string `mapstructure:"namespace" long:"namespace"   description:"Vault namespace to use for authentication and secret lookup."`
+	SharedPath      string   `mapstructure:"shared_path" long:"shared-path" description:"Path under which to lookup shared credentials."`
+	Namespace       string   `mapstructure:"namespace" long:"namespace"   description:"Vault namespace to use for authentication and secret lookup."`
 
-	TLS TLSConfig  `mapstructure:",squash"`
+	TLS  TLSConfig  `mapstructure:",squash"`
 	Auth AuthConfig `mapstructure:",squash"`
 
 	Client        *APIClient
@@ -139,7 +138,7 @@ func (manager VaultManager) Validate() error {
 
 	for i, tmpl := range manager.LookupTemplates {
 		name := fmt.Sprintf("lookup-template-%d", i)
-		if _, err := creds.BuildSecretTemplate(name, manager.PathPrefix + tmpl); err != nil {
+		if _, err := creds.BuildSecretTemplate(name, manager.PathPrefix+tmpl); err != nil {
 			return err
 		}
 	}

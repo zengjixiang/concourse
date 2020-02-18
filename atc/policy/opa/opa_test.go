@@ -16,10 +16,10 @@ import (
 var _ = Describe("Policy checker", func() {
 
 	var (
-		logger = lagertest.NewTestLogger("opa-test")
+		logger  = lagertest.NewTestLogger("opa-test")
 		fakeOpa *httptest.Server
-		agent policy.Agent
-		err error
+		agent   policy.Agent
+		err     error
 	)
 
 	AfterEach(func() {
@@ -30,7 +30,7 @@ var _ = Describe("Policy checker", func() {
 
 	JustBeforeEach(func() {
 		fakeOpa.Start()
-		agent, err = (&opa.OpaConfig{fakeOpa.URL, time.Second*2}).NewAgent(logger)
+		agent, err = (&opa.OpaConfig{fakeOpa.URL, time.Second * 2}).NewAgent(logger)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(agent).ToNot(BeNil())
 	})

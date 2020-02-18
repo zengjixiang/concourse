@@ -61,7 +61,7 @@ func (config *NewRelicConfig) IsConfigured() bool {
 
 func (config *NewRelicConfig) NewEmitter() (metric.Emitter, error) {
 	client := &http.Client{
-		Transport: &http.Transport{ Proxy: http.ProxyFromEnvironment },
+		Transport: &http.Transport{Proxy: http.ProxyFromEnvironment},
 		Timeout:   time.Minute,
 	}
 

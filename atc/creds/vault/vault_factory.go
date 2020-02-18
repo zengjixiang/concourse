@@ -17,11 +17,11 @@ type vaultFactory struct {
 
 func NewVaultFactory(sr SecretReader, loggedIn <-chan struct{}, prefix string, lookupTemplates []*creds.SecretTemplate, sharedPath string) *vaultFactory {
 	factory := &vaultFactory{
-		sr:               sr,
-		prefix:           prefix,
+		sr:              sr,
+		prefix:          prefix,
 		lookupTemplates: lookupTemplates,
-		sharedPath:       sharedPath,
-		loggedIn:         loggedIn,
+		sharedPath:      sharedPath,
+		loggedIn:        loggedIn,
 	}
 
 	return factory

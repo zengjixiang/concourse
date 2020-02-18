@@ -2,10 +2,10 @@ package policychecker
 
 import (
 	"bytes"
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"sigs.k8s.io/yaml"
-	"encoding/json"
 
 	"github.com/concourse/concourse/atc/api/accessor"
 	"github.com/concourse/concourse/atc/policy"

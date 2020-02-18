@@ -23,7 +23,7 @@ var _ = Describe("AccessorFactory", func() {
 		fakeTeamFetcher   *accessorfakes.FakeTeamFetcher
 		dummyRequest      *http.Request
 
-		role  string
+		role string
 	)
 
 	BeforeEach(func() {

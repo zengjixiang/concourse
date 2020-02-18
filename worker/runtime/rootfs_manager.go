@@ -13,10 +13,10 @@ import (
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . RootfsManager
 
-type InvalidUidError struct{
+type InvalidUidError struct {
 	UID string
 }
-type InvalidGidError struct{
+type InvalidGidError struct {
 	GID string
 }
 

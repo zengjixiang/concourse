@@ -202,7 +202,6 @@ func (cmd *WorkerCommand) loadResources(logger lager.Logger) ([]atc.WorkerResour
 	return types, nil
 }
 
-
 func (cmd *WorkerCommand) hasFlags(prefix string) bool {
 	env := os.Environ()
 
@@ -222,7 +221,7 @@ const containerdEnvPrefix = "CONCOURSE_CONTAINERD_"
 func (cmd *WorkerCommand) verifyRuntimeFlags() error {
 	switch {
 	case cmd.Runtime == houdiniRuntime:
-		if cmd.hasFlags(guardianEnvPrefix)  || cmd.hasFlags(containerdEnvPrefix) {
+		if cmd.hasFlags(guardianEnvPrefix) || cmd.hasFlags(containerdEnvPrefix) {
 			return fmt.Errorf("cannot use %s or %s environment variables with Houdini", guardianEnvPrefix, containerdEnvPrefix)
 		}
 	case cmd.Runtime == containerdRuntime:

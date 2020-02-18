@@ -77,4 +77,3 @@ func (self *migrations) Up_1585079293() error {
 
 	return tx.Commit()
 }
-

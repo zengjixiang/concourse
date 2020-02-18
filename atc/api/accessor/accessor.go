@@ -64,7 +64,6 @@ func NewAccessor(
 	return a
 }
 
-
 func (a *access) computeTeamRoles() {
 	a.teamRoles = map[string][]string{}
 

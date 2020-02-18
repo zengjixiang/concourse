@@ -51,9 +51,9 @@ var (
 		},
 		{
 			Destination: "/sys/fs/cgroup",
-			Type: "cgroup",
-			Source: "cgroup",
-			Options: []string{"ro", "nosuid", "noexec", "nodev"},
+			Type:        "cgroup",
+			Source:      "cgroup",
+			Options:     []string{"ro", "nosuid", "noexec", "nodev"},
 		},
 		{
 			Destination: "/run",

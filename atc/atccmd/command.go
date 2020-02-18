@@ -50,6 +50,7 @@ import (
 	"github.com/concourse/concourse/atc/syslog"
 	"github.com/concourse/concourse/atc/worker"
 	"github.com/concourse/concourse/atc/worker/image"
+	"github.com/concourse/concourse/atc/worker/kubernetes"
 	"github.com/concourse/concourse/atc/wrappa"
 	"github.com/concourse/concourse/skymarshal/dexserver"
 	"github.com/concourse/concourse/skymarshal/legacyserver"
@@ -164,6 +165,18 @@ type RunCommand struct {
 	GardenRequestTimeout time.Duration `long:"garden-request-timeout" default:"5m" description:"How long to wait for requests to Garden to complete. 0 means no timeout."`
 
 	CLIArtifactsDir flag.Dir `long:"cli-artifacts-dir" description:"Directory containing downloadable CLI binaries."`
+
+	Worker struct {
+		GardenURL       flag.URL          `long:"garden-url"       description:"A Garden API endpoint to register as a worker."`
+		BaggageclaimURL flag.URL          `long:"baggageclaim-url" description:"A Baggageclaim API endpoint to register with the worker."`
+		ResourceTypes   map[string]string `long:"resource"         description:"A resource type to advertise for the worker. Can be specified multiple times." value-name:"TYPE:IMAGE"`
+	} `group:"Static Worker (optional)" namespace:"worker"`
+
+	KubernetesWorker struct {
+		InCluster  bool      `long:"in-cluster"`
+		Namespace  string    `long:"namespace" default:"concourse"`
+		Kubeconfig flag.File `long:"kubeconfig" required:"true"`
+	} `group:"Kubernetes Worker" namespace:"kubernetes-worker"`
 
 	Metrics struct {
 		HostName            string            `long:"metrics-host-name" description:"Host string to attach to emitted metrics."`
@@ -966,11 +979,25 @@ func (cmd *RunCommand) backendComponents(
 	)
 
 	pool := worker.NewPool(workerProvider)
-	workerClient := worker.NewClient(pool,
-		workerProvider,
-		compressionLib,
-		workerAvailabilityPollingInterval,
-		workerStatusPublishInterval)
+
+	// cc: forcibly disabling these for now
+	//
+	// workerClient := worker.NewClient(pool, workerProvider)
+
+	k8sWorkerClient, err := kubernetes.NewClient(
+		cmd.KubernetesWorker.InCluster,
+		cmd.KubernetesWorker.Kubeconfig.Path(),
+		cmd.KubernetesWorker.Namespace,
+		dbWorkerFactory,
+		resourceFactory,
+	)
+	// Potentially needed to comply with worker interface
+	//compressionLib
+	//workerAvailabilityPollingInterval,
+	//workerStatusPublishInterval)
+	if err != nil {
+		return nil, fmt.Errorf("failed configuring kubernetes worker client: %w", err)
+	}
 
 	defaultLimits, err := cmd.parseDefaultLimits()
 	if err != nil {
@@ -984,7 +1011,7 @@ func (cmd *RunCommand) backendComponents(
 
 	engine := cmd.constructEngine(
 		pool,
-		workerClient,
+		k8sWorkerClient,
 		resourceFactory,
 		teamFactory,
 		dbBuildFactory,
@@ -1102,6 +1129,15 @@ func (cmd *RunCommand) backendComponents(
 			),
 		})
 	}
+
+	// TODO K8s
+	// cc: k8s worker
+	//
+	//members = cmd.appendKubernetesWorker(logger, dbWorkerFactory, members)
+	//
+	//if cmd.Worker.GardenURL.URL != nil {
+	//	members = cmd.appendStaticWorker(logger, dbWorkerFactory, members)
+	//}
 
 	return components, err
 }
@@ -1887,6 +1923,68 @@ func (h tlsRedirectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		h.baseHandler.ServeHTTP(w, r)
 	}
+}
+
+func (cmd *RunCommand) appendKubernetesWorker(
+	logger lager.Logger,
+	workerFactory db.WorkerFactory,
+	members []grouper.Member,
+) []grouper.Member {
+	var resourceTypes []atc.WorkerResourceType
+
+	mapping := map[string]string{
+		"git":            "concourse/git-resource",
+		"registry-image": "concourse/registry-image-resource",
+	}
+
+	for t, resourcePath := range mapping {
+		resourceTypes = append(resourceTypes, atc.WorkerResourceType{
+			Type:  t,
+			Image: resourcePath,
+		})
+	}
+
+	return append(members,
+		grouper.Member{
+			Name: "static-worker",
+			Runner: worker.NewHardcoded(
+				logger,
+				workerFactory,
+				clock.NewClock(),
+				"k8s",
+				"baggageclaim",
+				resourceTypes,
+			),
+		},
+	)
+}
+
+func (cmd *RunCommand) appendStaticWorker(
+	logger lager.Logger,
+	workerFactory db.WorkerFactory,
+	members []grouper.Member,
+) []grouper.Member {
+	var resourceTypes []atc.WorkerResourceType
+	for t, resourcePath := range cmd.Worker.ResourceTypes {
+		resourceTypes = append(resourceTypes, atc.WorkerResourceType{
+			Type:  t,
+			Image: resourcePath,
+		})
+	}
+
+	return append(members,
+		grouper.Member{
+			Name: "static-worker",
+			Runner: worker.NewHardcoded(
+				logger,
+				workerFactory,
+				clock.NewClock(),
+				cmd.Worker.GardenURL.URL.Host,
+				cmd.Worker.BaggageclaimURL.String(),
+				resourceTypes,
+			),
+		},
+	)
 }
 
 func (cmd *RunCommand) isTLSEnabled() bool {
