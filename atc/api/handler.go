@@ -29,6 +29,7 @@ import (
 	"github.com/concourse/concourse/atc/creds"
 	"github.com/concourse/concourse/atc/db"
 	"github.com/concourse/concourse/atc/gc"
+	"github.com/concourse/concourse/atc/handles"
 	"github.com/concourse/concourse/atc/mainredirect"
 	"github.com/concourse/concourse/atc/worker"
 	"github.com/concourse/concourse/atc/wrappa"
@@ -51,6 +52,7 @@ func NewHandler(
 	volumeRepository db.VolumeRepository,
 	containerRepository db.ContainerRepository,
 	destroyer gc.Destroyer,
+	containerSyncer, volumeSyncer handles.Syncer,
 	dbBuildFactory db.BuildFactory,
 	dbCheckFactory db.CheckFactory,
 	dbResourceConfigFactory db.ResourceConfigFactory,

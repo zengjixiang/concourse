@@ -41,6 +41,7 @@ import (
 	"github.com/concourse/concourse/atc/engine"
 	"github.com/concourse/concourse/atc/engine/builder"
 	"github.com/concourse/concourse/atc/gc"
+	"github.com/concourse/concourse/atc/handles"
 	"github.com/concourse/concourse/atc/lidar"
 	"github.com/concourse/concourse/atc/metric"
 	"github.com/concourse/concourse/atc/policy"
@@ -984,12 +985,19 @@ func (cmd *RunCommand) backendComponents(
 	//
 	// workerClient := worker.NewClient(pool, workerProvider)
 
+	dbContainerRepository := db.NewContainerRepository(dbConn)
+	containerSyncer := handles.NewContainerSyncer(
+		dbContainerRepository,
+		gc.NewDestroyer(logger, dbContainerRepository, dbVolumeRepository),
+	)
+
 	k8sWorkerClient, err := kubernetes.NewClient(
 		cmd.KubernetesWorker.InCluster,
 		cmd.KubernetesWorker.Kubeconfig.Path(),
 		cmd.KubernetesWorker.Namespace,
 		dbWorkerFactory,
 		resourceFactory,
+		containerSyncer,
 	)
 	// Potentially needed to comply with worker interface
 	//compressionLib
@@ -1131,13 +1139,17 @@ func (cmd *RunCommand) backendComponents(
 	}
 
 	// TODO K8s
-	// cc: k8s worker
+	//target := kubernetes.NewTarget(
+	//	dbWorkerFactory,
+	//	containerSyncer,
+	//)
 	//
-	//members = cmd.appendKubernetesWorker(logger, dbWorkerFactory, members)
-	//
-	//if cmd.Worker.GardenURL.URL != nil {
-	//	members = cmd.appendStaticWorker(logger, dbWorkerFactory, members)
-	//}
+	//// cc: k8s worker -- replace this by a "beacon"
+	////
+	//members = append(members, grouper.Member{
+	//	Name:   "k8s-target",
+	//	Runner: kubernetes.NewTargetRunner(target),
+	//})
 
 	return components, err
 }
@@ -1864,6 +1876,9 @@ func (cmd *RunCommand) constructAPIHandler(
 		wrappa.NewCompressionWrappa(logger),
 	}
 
+	volumeSyncer := handles.NewVolumeSyncer(dbVolumeRepository, gcContainerDestroyer)
+	containerSyncer := handles.NewContainerSyncer(dbContainerRepository, gcContainerDestroyer)
+
 	return api.NewHandler(
 		logger,
 		cmd.ExternalURL.String(),
@@ -1878,6 +1893,8 @@ func (cmd *RunCommand) constructAPIHandler(
 		dbVolumeRepository,
 		dbContainerRepository,
 		gcContainerDestroyer,
+		containerSyncer, volumeSyncer,
+
 		dbBuildFactory,
 		dbCheckFactory,
 		resourceConfigFactory,
