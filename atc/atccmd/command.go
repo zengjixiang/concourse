@@ -175,7 +175,12 @@ type RunCommand struct {
 	} `group:"Static Worker (optional)" namespace:"worker"`
 
 	KubernetesWorker struct {
-		KubernetesConfig
+		ServiceAccount string `long:"service-account" description:"location of the service account mount"`
+
+		// ps.: in the presence of multiple contexts, assume that the current
+		// one is the desired
+		//
+		Kubeconfig string `long:"kubeconfig" default:"~/.kube/config" description:"kubeconfig file location"`
 	} `group:"Kubernetes Worker" namespace:"kubernetes-worker"`
 
 	Metrics struct {
@@ -995,7 +1000,7 @@ func (cmd *RunCommand) backendComponents(
 		return nil, fmt.Errorf("kubernetes config: %w", err)
 	}
 
-	k8sbackend, err := kbackend.New(cmd.KubernetesWorker.Namespace, k8scfg)
+	k8sbackend, err := kbackend.New(k8scfg.Namespace, k8scfg.RestConfig)
 	if err != nil {
 		return nil, fmt.Errorf("kubernetes backend: %w", err)
 	}
