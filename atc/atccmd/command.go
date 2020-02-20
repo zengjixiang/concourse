@@ -176,8 +176,6 @@ type RunCommand struct {
 
 	KubernetesWorker struct {
 		KubernetesConfig
-
-		Namespace string `long:"namespace" default:"concourse"`
 	} `group:"Kubernetes Worker" namespace:"kubernetes-worker"`
 
 	Metrics struct {
@@ -1950,42 +1948,6 @@ func (h tlsRedirectHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	} else {
 		h.baseHandler.ServeHTTP(w, r)
 	}
-}
-
-func (cmd *RunCommand) appendKubernetesWorker(
-	logger lager.Logger,
-	workerFactory db.WorkerFactory,
-	members []grouper.Member,
-) []grouper.Member {
-	var resourceTypes []atc.WorkerResourceType
-
-	// [cc] hardcoded map of base resource types that we expose
-	//
-	mapping := map[string]string{
-		"git":            "concourse/git-resource",
-		"registry-image": "concourse/registry-image-resource",
-	}
-
-	for t, resourcePath := range mapping {
-		resourceTypes = append(resourceTypes, atc.WorkerResourceType{
-			Type:  t,
-			Image: resourcePath,
-		})
-	}
-
-	return append(members,
-		grouper.Member{
-			Name: "static-worker",
-			Runner: worker.NewHardcoded(
-				logger,
-				workerFactory,
-				clock.NewClock(),
-				"k8s",
-				"baggageclaim",
-				resourceTypes,
-			),
-		},
-	)
 }
 
 func (cmd *RunCommand) appendStaticWorker(
