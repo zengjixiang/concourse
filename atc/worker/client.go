@@ -121,8 +121,9 @@ type client struct {
 }
 
 type TaskResult struct {
-	ExitStatus   int
-	VolumeMounts []VolumeMount
+	ExitStatus    int
+	TaskArtifacts map[string]runtime.TaskArtifact
+	VolumeMounts  []VolumeMount // cc: not really a good fit
 }
 
 type CheckResult struct {
@@ -532,11 +533,14 @@ func (client *client) RunPutStep(
 ) (PutResult, error) {
 
 	vr := runtime.VersionResult{}
+
+	// cc: get inputs figured out
 	err := client.wireInputsAndCaches(logger, &containerSpec)
 	if err != nil {
 		return PutResult{}, err
 	}
 
+	// cc: find a worker
 	chosenWorker, err := client.pool.FindOrChooseWorkerForContainer(
 		ctx,
 		logger,
@@ -564,7 +568,8 @@ func (client *client) RunPutStep(
 		return PutResult{}, err
 	}
 
-	// container already exited
+	// cc: check if container already exited
+	// (do we do this in other places?)
 	exitStatusProp, err := container.Property(taskExitStatusPropertyName)
 	if err == nil {
 		logger.Info("already-exited", lager.Data{"status": exitStatusProp})
@@ -580,8 +585,10 @@ func (client *client) RunPutStep(
 		}, nil
 	}
 
+	// cc: send the event
 	eventDelegate.Starting(logger)
 
+	// cc: create the resource, and run it.
 	vr, err = resource.Put(ctx, spec, container)
 	if err != nil {
 		if failErr, ok := err.(runtime.ErrResourceScriptFailed); ok {
