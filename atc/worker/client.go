@@ -309,7 +309,9 @@ func (client *client) RunTaskStep(
 
 	eventDelegate.SelectedWorker(logger, chosenWorker.Name())
 
-	// container already exited
+	// process already exited
+	// TODO we need to implement this, actually
+	//
 	exitStatusProp, _ := container.Properties()
 	code := exitStatusProp[taskExitStatusPropertyName]
 	if code != "" {

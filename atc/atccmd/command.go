@@ -1148,6 +1148,7 @@ func (cmd *RunCommand) backendComponents(
 	//	dbWorkerFactory,
 	//	containerSyncer,
 	//  k8sbackend,
+	//  dbContainerRepository,
 	//)
 	//
 	//// cc: k8s worker -- replace this by a "beacon"
