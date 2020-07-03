@@ -12,7 +12,7 @@ import (
 	"code.cloudfoundry.org/lager"
 	"github.com/concourse/concourse/atc/db"
 	"github.com/concourse/concourse/atc/runtime"
-	"github.com/concourse/concourse/atc/worker/gclient"
+	"github.com/concourse/concourse/gclient"
 )
 
 var ErrMissingVolume = errors.New("volume mounted to container is missing")

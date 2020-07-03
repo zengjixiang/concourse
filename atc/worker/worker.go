@@ -25,7 +25,7 @@ import (
 	"github.com/concourse/concourse/atc/policy"
 	"github.com/concourse/concourse/atc/resource"
 	"github.com/concourse/concourse/atc/runtime"
-	"github.com/concourse/concourse/atc/worker/gclient"
+	"github.com/concourse/concourse/gclient"
 	"github.com/concourse/concourse/tracing"
 )
 

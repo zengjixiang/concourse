@@ -7,7 +7,7 @@ import (
 	"code.cloudfoundry.org/garden"
 	"code.cloudfoundry.org/lager"
 	"github.com/concourse/concourse/atc/db"
-	"github.com/concourse/concourse/atc/worker/gclient"
+	"github.com/concourse/concourse/gclient"
 )
 
 type workerHelper struct {

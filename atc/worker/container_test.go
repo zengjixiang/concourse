@@ -14,7 +14,7 @@ import (
 	"github.com/concourse/concourse/atc/db/dbfakes"
 	"github.com/concourse/concourse/atc/runtime"
 	"github.com/concourse/concourse/atc/worker"
-	"github.com/concourse/concourse/atc/worker/gclient/gclientfakes"
+	"github.com/concourse/concourse/gclient/gclientfakes"
 	"github.com/concourse/concourse/atc/worker/workerfakes"
 	"github.com/onsi/gomega/gbytes"
 

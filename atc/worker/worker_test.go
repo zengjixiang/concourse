@@ -17,7 +17,7 @@ import (
 	"github.com/concourse/concourse/atc/db"
 	"github.com/concourse/concourse/atc/db/dbfakes"
 	. "github.com/concourse/concourse/atc/worker"
-	"github.com/concourse/concourse/atc/worker/gclient/gclientfakes"
+	"github.com/concourse/concourse/gclient/gclientfakes"
 	"github.com/concourse/concourse/atc/worker/workerfakes"
 	"github.com/cppforlife/go-semi-semantic/version"
 	. "github.com/onsi/ginkgo"

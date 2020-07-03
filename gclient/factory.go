@@ -6,7 +6,7 @@ import (
 
 	"code.cloudfoundry.org/garden/routes"
 	"code.cloudfoundry.org/lager"
-	"github.com/concourse/concourse/atc/worker/gclient/connection"
+	"github.com/concourse/concourse/gclient/connection"
 	"github.com/concourse/concourse/atc/worker/transport"
 	"github.com/concourse/retryhttp"
 	"github.com/tedsuo/rata"
