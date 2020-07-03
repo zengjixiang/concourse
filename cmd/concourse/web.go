@@ -136,6 +136,8 @@ func (cmd *WebCommand) populateSharedFlags() error {
 		}
 	}
 
+	cmd.TSACommand.GardenRequestTimeout = cmd.RunCommand.GardenRequestTimeout
+
 	cmd.TSACommand.ClusterName = cmd.RunCommand.Server.ClusterName
 	cmd.TSACommand.LogClusterName = cmd.RunCommand.LogClusterName
 
