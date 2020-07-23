@@ -177,7 +177,7 @@ func (cmd *WorkerCommand) containerdRunner(logger lager.Logger) (ifrit.Runner, e
 		logger,
 		cmd.bindAddr(),
 		sock,
-		cmd.Garden.RequestTimeout,
+		cmd.Containerd.RequestTimeout,
 		dnsServers,
 		cmd.ContainerNetworkPool,
 		cmd.Containerd.MaxContainers,
