@@ -283,7 +283,7 @@ var _ = Describe("PutStep", func() {
 		Expect(actualContext).To(Equal(ctx))
 		Expect(actualOwner).To(Equal(db.NewBuildStepContainerOwner(42, atc.PlanID(planID), 123)))
 		Expect(actualContainerSpec.ImageSpec).To(Equal(worker.ImageSpec{
-			ResourceType: "some-resource-type",
+			BaseResourceType: "some-resource-type",
 		}))
 		Expect(actualContainerSpec.Tags).To(Equal([]string{"some", "tags"}))
 		Expect(actualContainerSpec.TeamID).To(Equal(123))
@@ -296,10 +296,10 @@ var _ = Describe("PutStep", func() {
 		Expect(actualContainerSpec.ArtifactByPath["/tmp/build/put/some-source"]).To(Equal(fakeArtifact))
 
 		Expect(actualWorkerSpec).To(Equal(worker.WorkerSpec{
-			TeamID:        123,
-			Tags:          []string{"some", "tags"},
-			ResourceType:  "some-resource-type",
-			ResourceTypes: interpolatedResourceTypes,
+			TeamID:           123,
+			Tags:             []string{"some", "tags"},
+			BaseResourceType: "some-resource-type",
+			ResourceTypes:    interpolatedResourceTypes,
 		}))
 		Expect(actualStrategy).To(Equal(fakeStrategy))
 

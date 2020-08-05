@@ -29,7 +29,6 @@ type FetchSourceFactory interface {
 		owner db.ContainerOwner,
 		cache db.UsedResourceCache,
 		resource resource.Resource,
-		resourceTypes atc.VersionedResourceTypes,
 		containerSpec ContainerSpec,
 		processSpec runtime.ProcessSpec,
 		containerMetadata db.ContainerMetadata,
@@ -55,7 +54,6 @@ func (r *fetchSourceFactory) NewFetchSource(
 	owner db.ContainerOwner,
 	cache db.UsedResourceCache,
 	resource resource.Resource,
-	resourceTypes atc.VersionedResourceTypes,
 	containerSpec ContainerSpec,
 	processSpec runtime.ProcessSpec,
 	containerMetadata db.ContainerMetadata,
@@ -67,7 +65,6 @@ func (r *fetchSourceFactory) NewFetchSource(
 		owner:                  owner,
 		cache:                  cache,
 		resource:               resource,
-		resourceTypes:          resourceTypes,
 		containerSpec:          containerSpec,
 		processSpec:            processSpec,
 		containerMetadata:      containerMetadata,
@@ -82,7 +79,6 @@ type fetchSource struct {
 	owner                  db.ContainerOwner
 	cache                  db.UsedResourceCache
 	resource               resource.Resource
-	resourceTypes          atc.VersionedResourceTypes
 	containerSpec          ContainerSpec
 	processSpec            runtime.ProcessSpec
 	containerMetadata      db.ContainerMetadata
@@ -159,7 +155,6 @@ func (s *fetchSource) Create(ctx context.Context) (GetResult, Volume, error) {
 		s.owner,
 		s.containerMetadata,
 		s.containerSpec,
-		s.resourceTypes,
 	)
 
 	if err != nil {

@@ -420,7 +420,7 @@ var _ = Describe("DBProvider", func() {
 				JustBeforeEach(func() {
 					containerSpec = ContainerSpec{
 						ImageSpec: ImageSpec{
-							ResourceType: "some-resource-a",
+							BaseResourceType: "some-resource-a",
 						},
 					}
 
@@ -488,7 +488,7 @@ var _ = Describe("DBProvider", func() {
 				It("calls through to garden", func() {
 					containerSpec := ContainerSpec{
 						ImageSpec: ImageSpec{
-							ResourceType: "some-resource-a",
+							BaseResourceType: "some-resource-a",
 						},
 					}
 

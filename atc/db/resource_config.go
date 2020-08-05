@@ -49,6 +49,7 @@ type ResourceConfig interface {
 	CreatedByBaseResourceType() *UsedBaseResourceType
 	OriginBaseResourceType() *UsedBaseResourceType
 
+	FindOrCreateScope(Resource) (ResourceConfigScope, error)
 	FindResourceConfigScopeByID(int, Resource) (ResourceConfigScope, bool, error)
 }
 
@@ -71,6 +72,11 @@ func (r *resourceConfig) OriginBaseResourceType() *UsedBaseResourceType {
 		return r.createdByBaseResourceType
 	}
 	return r.createdByResourceCache.ResourceConfig().OriginBaseResourceType()
+}
+
+func (r *resourceConfig) FindOrCreateScope(resource Resource) (ResourceConfigScope, error) {
+	// XXX
+	return nil, nil
 }
 
 func (r *resourceConfig) FindResourceConfigScopeByID(resourceConfigScopeID int, resource Resource) (ResourceConfigScope, bool, error) {
@@ -258,7 +264,6 @@ func (r *ResourceConfigDescriptor) find(tx Tx, lockFactory lock.LockFactory, con
 
 func (r *ResourceConfigDescriptor) findWithParentID(tx Tx, parentColumnName string, parentID int) (int, bool, error) {
 	var id int
-	var whereClause sq.Eq
 
 	err := psql.Select("id").
 		From("resource_configs").
@@ -266,7 +271,6 @@ func (r *ResourceConfigDescriptor) findWithParentID(tx Tx, parentColumnName stri
 			parentColumnName: parentID,
 			"source_hash":    mapHash(r.Source),
 		}).
-		Where(whereClause).
 		Suffix("FOR SHARE").
 		RunWith(tx).
 		QueryRow().

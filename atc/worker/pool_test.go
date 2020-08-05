@@ -74,7 +74,7 @@ var _ = Describe("Pool", func() {
 			fakeInput2.SourceReturns(fakeInput2AS)
 
 			spec = ContainerSpec{
-				ImageSpec: ImageSpec{ResourceType: "some-type"},
+				ImageSpec: ImageSpec{BaseResourceType: "some-type"},
 
 				TeamID: 4567,
 
@@ -96,10 +96,10 @@ var _ = Describe("Pool", func() {
 			}
 
 			workerSpec = WorkerSpec{
-				ResourceType:  "some-type",
-				TeamID:        4567,
-				Tags:          atc.Tags{"some-tag"},
-				ResourceTypes: resourceTypes,
+				BaseResourceType: "some-type",
+				TeamID:           4567,
+				Tags:             atc.Tags{"some-tag"},
+				ResourceTypes:    resourceTypes,
 			}
 
 			incompatibleWorker = new(workerfakes.FakeWorker)

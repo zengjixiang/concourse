@@ -48,6 +48,22 @@ type planVisitor struct {
 }
 
 func (visitor *planVisitor) VisitTask(step *atc.TaskStep) error {
+	// the problem: we don't even know what the image is, and we don't know the
+	// type, so we don't even know how many plans are needed (resource types
+	// can be recursive)
+	//
+	// if there's a version for the resource type, use Get step directly
+	//
+	// if there is no version, create a Check and use Get with VersionFrom
+	//
+	// this is dope, because we just figure it out at plan time, and the Check
+	// step will result in the versions being saved regardless
+	//
+	// check for resource type (which we can know, 'cause we have VRT here!!)
+	// get for resource type image
+	// check for image
+	// get for image
+	// ImageArtifactName
 	visitor.plan = visitor.planFactory.NewPlan(atc.TaskPlan{
 		Name:              step.Name,
 		Privileged:        step.Privileged,
@@ -89,10 +105,9 @@ func (visitor *planVisitor) VisitGet(step *atc.GetStep) error {
 		return VersionNotProvidedError{step.Name}
 	}
 
-	visitor.plan = visitor.planFactory.NewPlan(atc.GetPlan{
+	getPlanConfig := atc.GetPlan{
 		Name: step.Name,
 
-		Type:     resource.Type,
 		Resource: resourceName,
 		Source:   resource.Source,
 		Params:   step.Params,
@@ -100,7 +115,21 @@ func (visitor *planVisitor) VisitGet(step *atc.GetStep) error {
 		Tags:     step.Tags,
 
 		VersionedResourceTypes: visitor.resourceTypes,
-	})
+	}
+
+	imagePlan, hasImagePlan := visitor.resourceTypes.FetchType(resource.Type, visitor.planFactory)
+	if hasImagePlan {
+		getPlanConfig.ImageArtifactName = "type:" + resource.Type
+
+		visitor.plan = visitor.planFactory.NewPlan(atc.OnSuccessPlan{
+			Step: imagePlan,
+			Next: visitor.planFactory.NewPlan(getPlanConfig),
+		})
+	} else {
+		getPlanConfig.Type = resource.Type
+
+		visitor.plan = visitor.planFactory.NewPlan(getPlanConfig)
+	}
 
 	return nil
 }
@@ -118,8 +147,7 @@ func (visitor *planVisitor) VisitPut(step *atc.PutStep) error {
 		return UnknownResourceError{resourceName}
 	}
 
-	atcPutPlan := atc.PutPlan{
-		Type:     resource.Type,
+	putPlanConfig := atc.PutPlan{
 		Name:     logicalName,
 		Resource: resourceName,
 		Source:   resource.Source,
@@ -130,7 +158,20 @@ func (visitor *planVisitor) VisitPut(step *atc.PutStep) error {
 		VersionedResourceTypes: visitor.resourceTypes,
 	}
 
-	putPlan := visitor.planFactory.NewPlan(atcPutPlan)
+	var putPlan atc.Plan
+	imagePlan, hasImagePlan := visitor.resourceTypes.FetchType(resource.Type, visitor.planFactory)
+	if hasImagePlan {
+		putPlanConfig.ImageArtifactName = "type:" + resource.Type
+
+		putPlan = visitor.planFactory.NewPlan(atc.OnSuccessPlan{
+			Step: imagePlan,
+			Next: visitor.planFactory.NewPlan(putPlanConfig),
+		})
+	} else {
+		putPlanConfig.Type = resource.Type
+
+		putPlan = visitor.planFactory.NewPlan(putPlanConfig)
+	}
 
 	dependentGetPlan := visitor.planFactory.NewPlan(atc.GetPlan{
 		Type:        resource.Type,

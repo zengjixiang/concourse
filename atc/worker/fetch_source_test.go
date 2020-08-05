@@ -119,7 +119,7 @@ var _ = Describe("FetchSource", func() {
 				TeamID: 42,
 				Tags:   []string{},
 				ImageSpec: worker.ImageSpec{
-					ResourceType: "fake-resource-type",
+					BaseResourceType: "fake-resource-type",
 				},
 				Outputs: map[string]string{
 					"resource": resource.ResourcesDir("get"),
@@ -237,7 +237,7 @@ var _ = Describe("FetchSource", func() {
 						TeamID: 42,
 						Tags:   []string{},
 						ImageSpec: worker.ImageSpec{
-							ResourceType: "fake-resource-type",
+							BaseResourceType: "fake-resource-type",
 						},
 						BindMounts: []worker.BindMountSource{&worker.CertsVolumeMount{Logger: logger}},
 						Outputs: map[string]string{

@@ -56,7 +56,6 @@ type Worker interface {
 		db.ContainerOwner,
 		db.ContainerMetadata,
 		ContainerSpec,
-		atc.VersionedResourceTypes,
 	) (Container, error)
 
 	FindVolumeForResourceCache(logger lager.Logger, resourceCache db.UsedResourceCache) (Volume, bool, error)
@@ -212,68 +211,6 @@ func (worker *gardenWorker) LookupVolume(logger lager.Logger, handle string) (Vo
 	return worker.volumeClient.LookupVolume(logger, handle)
 }
 
-func (worker *gardenWorker) imagePolicyCheck(
-	ctx context.Context,
-	delegate ImageFetchingDelegate,
-	metadata db.ContainerMetadata,
-	containerSpec ContainerSpec,
-	resourceTypes atc.VersionedResourceTypes,
-) (bool, error) {
-	if worker.policyChecker == nil {
-		return true, nil
-	}
-
-	// Actions in skip list will not go through policy check.
-	if !worker.policyChecker.ShouldCheckAction(policy.ActionUseImage) {
-		return true, nil
-	}
-
-	imageSpec := containerSpec.ImageSpec
-
-	imageInfo := map[string]interface{}{
-		"privileged": imageSpec.Privileged,
-	}
-
-	if imageSpec.ImageResource != nil {
-		imageInfo["image_type"] = imageSpec.ImageResource.Type
-		imageInfo["image_source"] = imageSpec.ImageResource.Source
-	} else if imageSpec.ResourceType != "" {
-		for _, rt := range resourceTypes {
-			if rt.Name == imageSpec.ResourceType {
-				imageInfo["image_type"] = rt.Type
-				imageInfo["image_source"] = rt.Source
-			}
-		}
-
-		// If resource type not found, then it should be a built-in resource
-		// type, and could skip policy check.
-		if _, ok := imageInfo["image_type"]; !ok {
-			return true, nil
-		}
-	} else {
-		// Ignore other images as policy checker cannot do much on them.
-		return true, nil
-	}
-
-	if originalSource, ok := imageInfo["image_source"].(atc.Source); ok {
-		redactedSource, err := delegate.RedactImageSource(originalSource)
-		if err != nil {
-			return false, err
-		}
-		imageInfo["image_source"] = redactedSource
-	}
-
-	teamName, pipelineName := policy.TeamAndPipelineFromContext(ctx)
-	input := policy.PolicyCheckInput{
-		Action:   policy.ActionUseImage,
-		Team:     teamName,
-		Pipeline: pipelineName,
-		Data:     imageInfo,
-	}
-
-	return worker.policyChecker.Check(input)
-}
-
 func (worker *gardenWorker) FindOrCreateContainer(
 	ctx context.Context,
 	logger lager.Logger,
@@ -281,7 +218,6 @@ func (worker *gardenWorker) FindOrCreateContainer(
 	owner db.ContainerOwner,
 	metadata db.ContainerMetadata,
 	containerSpec ContainerSpec,
-	resourceTypes atc.VersionedResourceTypes,
 ) (Container, error) {
 
 	var (
@@ -291,14 +227,6 @@ func (worker *gardenWorker) FindOrCreateContainer(
 		containerHandle   string
 		err               error
 	)
-
-	pass, err := worker.imagePolicyCheck(ctx, delegate, metadata, containerSpec, resourceTypes)
-	if err != nil {
-		return nil, err
-	}
-	if !pass {
-		return nil, policy.PolicyCheckNotPass{}
-	}
 
 	// ensure either creatingContainer or createdContainer exists
 	creatingContainer, createdContainer, err = worker.dbWorker.FindContainer(owner)
@@ -362,8 +290,6 @@ func (worker *gardenWorker) FindOrCreateContainer(
 			logger,
 			containerSpec.ImageSpec,
 			containerSpec.TeamID,
-			delegate,
-			resourceTypes,
 			creatingContainer,
 		)
 		if err != nil {
@@ -450,8 +376,6 @@ func (worker *gardenWorker) fetchImageForContainer(
 	logger lager.Logger,
 	spec ImageSpec,
 	teamID int,
-	delegate ImageFetchingDelegate,
-	resourceTypes atc.VersionedResourceTypes,
 	creatingContainer db.CreatingContainer,
 ) (FetchedImage, error) {
 	image, err := worker.imageFactory.GetImage(
@@ -460,8 +384,6 @@ func (worker *gardenWorker) fetchImageForContainer(
 		worker.volumeClient,
 		spec,
 		teamID,
-		delegate,
-		resourceTypes,
 	)
 	if err != nil {
 		return FetchedImage{}, err
@@ -782,12 +704,10 @@ func (worker *gardenWorker) Satisfies(logger lager.Logger, spec WorkerSpec) bool
 		return false
 	}
 
-	if spec.ResourceType != "" {
-		underlyingType := determineUnderlyingTypeName(spec.ResourceType, spec.ResourceTypes)
-
+	if spec.BaseResourceType != "" {
 		matchedType := false
 		for _, t := range workerResourceTypes {
-			if t.Type == underlyingType {
+			if t.Type == spec.BaseResourceType {
 				matchedType = true
 				break
 			}
@@ -809,21 +729,6 @@ func (worker *gardenWorker) Satisfies(logger lager.Logger, spec WorkerSpec) bool
 	}
 
 	return true
-}
-
-func determineUnderlyingTypeName(typeName string, resourceTypes atc.VersionedResourceTypes) string {
-	resourceTypesMap := make(map[string]atc.VersionedResourceType)
-	for _, resourceType := range resourceTypes {
-		resourceTypesMap[resourceType.Name] = resourceType
-	}
-	underlyingTypeName := typeName
-	underlyingType, ok := resourceTypesMap[underlyingTypeName]
-	for ok {
-		underlyingTypeName = underlyingType.Type
-		underlyingType, ok = resourceTypesMap[underlyingTypeName]
-		delete(resourceTypesMap, underlyingTypeName)
-	}
-	return underlyingTypeName
 }
 
 func (worker *gardenWorker) Description() string {

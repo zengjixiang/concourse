@@ -1,3 +1,4 @@
+// XXX: why was this given its own package??? the only thing that uses it is exec/
 package build
 
 import (

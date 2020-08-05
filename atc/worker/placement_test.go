@@ -46,7 +46,7 @@ var _ = Describe("FewestBuildContainersPlacementStrategy", func() {
 			compatibleWorker3 = new(workerfakes.FakeWorker)
 
 			spec = ContainerSpec{
-				ImageSpec: ImageSpec{ResourceType: "some-type"},
+				ImageSpec: ImageSpec{BaseResourceType: "some-type"},
 
 				TeamID: 4567,
 
@@ -156,7 +156,7 @@ var _ = Describe("VolumeLocalityPlacementStrategy", func() {
 			fakeInput2.SourceReturns(fakeInput2AS)
 
 			spec = ContainerSpec{
-				ImageSpec: ImageSpec{ResourceType: "some-type"},
+				ImageSpec: ImageSpec{BaseResourceType: "some-type"},
 
 				TeamID: 4567,
 
@@ -320,7 +320,7 @@ var _ = Describe("LimitActiveTasksPlacementStrategy", func() {
 			compatibleWorker3 = new(workerfakes.FakeWorker)
 
 			spec = ContainerSpec{
-				ImageSpec: ImageSpec{ResourceType: "some-type"},
+				ImageSpec: ImageSpec{BaseResourceType: "some-type"},
 
 				Type: "task",
 

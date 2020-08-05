@@ -32,11 +32,11 @@ func (err MissingInputsError) Error() string {
 	return fmt.Sprintf("missing inputs: %s", strings.Join(err.Inputs, ", "))
 }
 
-type MissingTaskImageSourceError struct {
+type MissingImageSourceError struct {
 	SourceName string
 }
 
-func (err MissingTaskImageSourceError) Error() string {
+func (err MissingImageSourceError) Error() string {
 	return fmt.Sprintf(`missing image artifact source: %s
 
 make sure there's a corresponding 'get' step, or a task that produces it as an output`, err.SourceName)
@@ -292,19 +292,11 @@ func (step *TaskStep) imageSpec(logger lager.Logger, repository *build.Repositor
 	if step.plan.ImageArtifactName != "" {
 		art, found := repository.ArtifactFor(build.ArtifactName(step.plan.ImageArtifactName))
 		if !found {
-			return worker.ImageSpec{}, MissingTaskImageSourceError{step.plan.ImageArtifactName}
+			return worker.ImageSpec{}, MissingImageSourceError{step.plan.ImageArtifactName}
 		}
 
 		imageSpec.ImageArtifact = art
 
-		//an image_resource
-	} else if config.ImageResource != nil {
-		imageSpec.ImageResource = &worker.ImageResource{
-			Type:    config.ImageResource.Type,
-			Source:  config.ImageResource.Source,
-			Params:  config.ImageResource.Params,
-			Version: config.ImageResource.Version,
-		}
 		// a rootfs_uri
 	} else if config.RootfsURI != "" {
 		imageSpec.ImageURL = config.RootfsURI
@@ -402,23 +394,11 @@ func (step *TaskStep) containerSpec(logger lager.Logger, repository *build.Repos
 }
 
 func (step *TaskStep) workerSpec(logger lager.Logger, resourceTypes atc.VersionedResourceTypes, repository *build.Repository, config atc.TaskConfig) (worker.WorkerSpec, error) {
-	workerSpec := worker.WorkerSpec{
-		Platform:      config.Platform,
-		Tags:          step.plan.Tags,
-		TeamID:        step.metadata.TeamID,
-		ResourceTypes: resourceTypes,
-	}
-
-	imageSpec, err := step.imageSpec(logger, repository, config)
-	if err != nil {
-		return worker.WorkerSpec{}, err
-	}
-
-	if imageSpec.ImageResource != nil {
-		workerSpec.ResourceType = imageSpec.ImageResource.Type
-	}
-
-	return workerSpec, nil
+	return worker.WorkerSpec{
+		Platform: config.Platform,
+		Tags:     step.plan.Tags,
+		TeamID:   step.metadata.TeamID,
+	}, nil
 }
 
 func (step *TaskStep) registerOutputs(logger lager.Logger, repository *build.Repository, config atc.TaskConfig, volumeMounts []worker.VolumeMount, metadata db.ContainerMetadata) {

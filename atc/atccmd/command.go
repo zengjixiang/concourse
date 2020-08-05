@@ -665,17 +665,10 @@ func (cmd *RunCommand) constructAPIMembers(
 
 	userFactory := db.NewUserFactory(dbConn)
 
-	resourceFactory := resource.NewResourceFactory()
 	dbResourceCacheFactory := db.NewResourceCacheFactory(dbConn, lockFactory)
 	fetchSourceFactory := worker.NewFetchSourceFactory(dbResourceCacheFactory)
 	resourceFetcher := worker.NewFetcher(clock.NewClock(), lockFactory, fetchSourceFactory)
 	dbResourceConfigFactory := db.NewResourceConfigFactory(dbConn, lockFactory)
-	imageResourceFetcherFactory := image.NewImageResourceFetcherFactory(
-		resourceFactory,
-		dbResourceCacheFactory,
-		dbResourceConfigFactory,
-		resourceFetcher,
-	)
 
 	dbWorkerBaseResourceTypeFactory := db.NewWorkerBaseResourceTypeFactory(dbConn)
 	dbWorkerTaskCacheFactory := db.NewWorkerTaskCacheFactory(dbConn)
@@ -687,12 +680,11 @@ func (cmd *RunCommand) constructAPIMembers(
 		return nil, err
 	}
 
-	compressionLib := compression.NewGzipCompression()
 	workerProvider := worker.NewDBWorkerProvider(
 		lockFactory,
 		retryhttp.NewExponentialBackOffFactory(5*time.Minute),
 		resourceFetcher,
-		image.NewImageFactory(imageResourceFetcherFactory, compressionLib),
+		image.NewImageFactory(),
 		dbResourceCacheFactory,
 		dbResourceConfigFactory,
 		dbWorkerBaseResourceTypeFactory,
@@ -706,6 +698,14 @@ func (cmd *RunCommand) constructAPIMembers(
 		cmd.GardenRequestTimeout,
 		policyChecker,
 	)
+
+	// XXX: this used to be only gzip???
+	var compressionLib compression.Compression
+	if cmd.StreamingArtifactsCompression == "zstd" {
+		compressionLib = compression.NewZstdCompression()
+	} else {
+		compressionLib = compression.NewGzipCompression()
+	}
 
 	pool := worker.NewPool(workerProvider)
 	workerClient := worker.NewClient(pool, workerProvider, compressionLib, workerAvailabilityPollingInterval, workerStatusPublishInterval)
@@ -896,12 +896,6 @@ func (cmd *RunCommand) backendComponents(
 	fetchSourceFactory := worker.NewFetchSourceFactory(dbResourceCacheFactory)
 	resourceFetcher := worker.NewFetcher(clock.NewClock(), lockFactory, fetchSourceFactory)
 	dbResourceConfigFactory := db.NewResourceConfigFactory(dbConn, lockFactory)
-	imageResourceFetcherFactory := image.NewImageResourceFetcherFactory(
-		resourceFactory,
-		dbResourceCacheFactory,
-		dbResourceConfigFactory,
-		resourceFetcher,
-	)
 
 	dbBuildFactory := db.NewBuildFactory(dbConn, lockFactory, cmd.GC.OneOffBuildGracePeriod, cmd.GC.FailedGracePeriod)
 	dbCheckFactory := db.NewCheckFactory(dbConn, lockFactory, secretManager, cmd.varSourcePool, cmd.GlobalResourceCheckTimeout)
@@ -921,17 +915,11 @@ func (cmd *RunCommand) backendComponents(
 		return nil, err
 	}
 
-	var compressionLib compression.Compression
-	if cmd.StreamingArtifactsCompression == "zstd" {
-		compressionLib = compression.NewZstdCompression()
-	} else {
-		compressionLib = compression.NewGzipCompression()
-	}
 	workerProvider := worker.NewDBWorkerProvider(
 		lockFactory,
 		retryhttp.NewExponentialBackOffFactory(5*time.Minute),
 		resourceFetcher,
-		image.NewImageFactory(imageResourceFetcherFactory, compressionLib),
+		image.NewImageFactory(),
 		dbResourceCacheFactory,
 		dbResourceConfigFactory,
 		dbWorkerBaseResourceTypeFactory,
@@ -946,6 +934,12 @@ func (cmd *RunCommand) backendComponents(
 		policyChecker,
 	)
 
+	var compressionLib compression.Compression
+	if cmd.StreamingArtifactsCompression == "zstd" {
+		compressionLib = compression.NewZstdCompression()
+	} else {
+		compressionLib = compression.NewGzipCompression()
+	}
 	pool := worker.NewPool(workerProvider)
 	workerClient := worker.NewClient(pool,
 		workerProvider,

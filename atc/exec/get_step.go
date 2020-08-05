@@ -138,23 +138,33 @@ func (step *GetStep) run(ctx context.Context, state RunState) error {
 		return err
 	}
 
+	imageSpec := worker.ImageSpec{}
+
+	if step.plan.Type != "" {
+		imageSpec.BaseResourceType = step.plan.Type
+	} else if step.plan.ImageArtifactName != "" {
+		art, found := state.ArtifactRepository().ArtifactFor(build.ArtifactName(step.plan.ImageArtifactName))
+		if !found {
+			return MissingImageSourceError{step.plan.ImageArtifactName}
+		}
+
+		imageSpec.ImageArtifact = art
+	}
+
 	containerSpec := worker.ContainerSpec{
-		ImageSpec: worker.ImageSpec{
-			ResourceType: step.plan.Type,
-		},
-		TeamID: step.metadata.TeamID,
-		Env:    step.metadata.Env(),
+		ImageSpec: imageSpec,
+		TeamID:    step.metadata.TeamID,
+		Env:       step.metadata.Env(),
 	}
 	tracing.Inject(ctx, &containerSpec)
 
 	workerSpec := worker.WorkerSpec{
-		ResourceType:  step.plan.Type,
-		Tags:          step.plan.Tags,
-		TeamID:        step.metadata.TeamID,
-		ResourceTypes: resourceTypes,
+		BaseResourceType: step.plan.Type,
+		Tags:             step.plan.Tags,
+		TeamID:           step.metadata.TeamID,
 	}
 
-	imageSpec := worker.ImageFetcherSpec{
+	imageFetcherSpec := worker.ImageFetcherSpec{
 		ResourceTypes: resourceTypes,
 		Delegate:      step.delegate,
 	}
@@ -195,7 +205,7 @@ func (step *GetStep) run(ctx context.Context, state RunState) error {
 		workerSpec,
 		step.strategy,
 		step.containerMetadata,
-		imageSpec,
+		imageFetcherSpec,
 		processSpec,
 		step.delegate,
 		resourceCache,
@@ -210,6 +220,13 @@ func (step *GetStep) run(ctx context.Context, state RunState) error {
 			build.ArtifactName(step.plan.Name),
 			getResult.GetArtifact,
 		)
+
+		state.StoreResult(step.planID, ResourceTypeImage{
+			Cache: resourceCache,
+			Spec: worker.ImageSpec{
+				ImageArtifact: getResult.GetArtifact,
+			},
+		})
 
 		if step.plan.Resource != "" {
 			step.delegate.UpdateVersion(logger, step.plan, getResult.VersionResult)

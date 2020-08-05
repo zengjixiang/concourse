@@ -4,27 +4,16 @@ import (
 	"errors"
 
 	"code.cloudfoundry.org/lager"
-	"github.com/concourse/concourse/atc"
-	"github.com/concourse/concourse/atc/compression"
 	"github.com/concourse/concourse/atc/worker"
-	w "github.com/concourse/concourse/atc/worker"
 )
 
 var ErrUnsupportedResourceType = errors.New("unsupported resource type")
 
 type imageFactory struct {
-	imageResourceFetcherFactory ImageResourceFetcherFactory
-	compression                 compression.Compression
 }
 
-func NewImageFactory(
-	imageResourceFetcherFactory ImageResourceFetcherFactory,
-	compression compression.Compression,
-) worker.ImageFactory {
-	return &imageFactory{
-		imageResourceFetcherFactory: imageResourceFetcherFactory,
-		compression:                 compression,
-	}
+func NewImageFactory() worker.ImageFactory {
+	return &imageFactory{}
 }
 
 func (f *imageFactory) GetImage(
@@ -33,8 +22,6 @@ func (f *imageFactory) GetImage(
 	volumeClient worker.VolumeClient,
 	imageSpec worker.ImageSpec,
 	teamID int,
-	delegate worker.ImageFetchingDelegate,
-	resourceTypes atc.VersionedResourceTypes,
 ) (worker.Image, error) {
 	if imageSpec.ImageArtifactSource != nil {
 		artifactVolume, existsOnWorker, err := imageSpec.ImageArtifactSource.ExistsOn(logger, worker)
@@ -59,65 +46,20 @@ func (f *imageFactory) GetImage(
 		}, nil
 	}
 
-	// check if custom resource
-	resourceType, found := resourceTypes.Lookup(imageSpec.ResourceType)
-	if found {
-		imageResourceFetcher := f.imageResourceFetcherFactory.NewImageResourceFetcher(
-			worker,
-			w.ImageResource{
-				Type:   resourceType.Type,
-				Source: resourceType.Source,
-				Params: resourceType.Params,
-			},
-			resourceType.Version,
-			teamID,
-			resourceTypes.Without(imageSpec.ResourceType),
-			delegate,
-			f.compression,
-		)
-
-		return &imageFromResource{
-			imageResourceFetcher: imageResourceFetcher,
-
-			privileged:   resourceType.Privileged,
-			teamID:       teamID,
-			volumeClient: volumeClient,
-		}, nil
-	}
-
-	if imageSpec.ImageResource != nil {
-		var version atc.Version
-		version = imageSpec.ImageResource.Version
-
-		imageResourceFetcher := f.imageResourceFetcherFactory.NewImageResourceFetcher(
-			worker,
-			*imageSpec.ImageResource,
-			version,
-			teamID,
-			resourceTypes,
-			delegate,
-			f.compression,
-		)
-
-		return &imageFromResource{
-			imageResourceFetcher: imageResourceFetcher,
-
-			privileged:   imageSpec.Privileged,
-			teamID:       teamID,
-			volumeClient: volumeClient,
-		}, nil
-	}
-
-	if imageSpec.ResourceType != "" {
+	if imageSpec.BaseResourceType != "" {
 		return &imageFromBaseResourceType{
 			worker:           worker,
-			resourceTypeName: imageSpec.ResourceType,
+			resourceTypeName: imageSpec.BaseResourceType,
 			teamID:           teamID,
 			volumeClient:     volumeClient,
 		}, nil
 	}
 
-	return &imageFromRootfsURI{
-		url: imageSpec.ImageURL,
-	}, nil
+	if imageSpec.ImageURL != "" {
+		return &imageFromRootfsURI{
+			url: imageSpec.ImageURL,
+		}, nil
+	}
+
+	return nil, errors.New("no image specified")
 }

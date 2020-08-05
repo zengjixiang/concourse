@@ -320,7 +320,7 @@ var _ = Describe("Image", func() {
 					fakeWorker,
 					fakeVolumeClient,
 					worker.ImageSpec{
-						ResourceType: "some-custom-resource-type",
+						BaseResourceType: "some-custom-resource-type",
 					},
 					42,
 					fakeImageFetchingDelegate,
@@ -416,7 +416,7 @@ var _ = Describe("Image", func() {
 					fakeWorker,
 					fakeVolumeClient,
 					worker.ImageSpec{
-						ResourceType: "some-custom-image-resource-type",
+						BaseResourceType: "some-custom-image-resource-type",
 					},
 					42,
 					fakeImageFetchingDelegate,
@@ -539,7 +539,7 @@ var _ = Describe("Image", func() {
 				fakeWorker,
 				fakeVolumeClient,
 				worker.ImageSpec{
-					ResourceType: "some-base-resource-type",
+					BaseResourceType: "some-base-resource-type",
 				},
 				42,
 				fakeImageFetchingDelegate,

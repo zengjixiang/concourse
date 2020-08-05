@@ -11,11 +11,10 @@ import (
 )
 
 type WorkerSpec struct {
-	Platform      string
-	ResourceType  string
-	Tags          []string
-	TeamID        int
-	ResourceTypes atc.VersionedResourceTypes
+	Platform         string
+	BaseResourceType string
+	Tags             []string
+	TeamID           int
 }
 
 type ContainerSpec struct {
@@ -93,9 +92,8 @@ type BindMountSource interface {
 type OutputPaths map[string]string
 
 type ImageSpec struct {
-	ResourceType        string
+	BaseResourceType    string
 	ImageURL            string
-	ImageResource       *ImageResource
 	ImageArtifactSource StreamableArtifactSource
 	ImageArtifact       runtime.Artifact
 	Privileged          bool
@@ -146,8 +144,8 @@ func (cl ContainerLimits) ToGardenLimits() garden.Limits {
 func (spec WorkerSpec) Description() string {
 	var attrs []string
 
-	if spec.ResourceType != "" {
-		attrs = append(attrs, fmt.Sprintf("resource type '%s'", spec.ResourceType))
+	if spec.BaseResourceType != "" {
+		attrs = append(attrs, fmt.Sprintf("resource type '%s'", spec.BaseResourceType))
 	}
 
 	if spec.Platform != "" {

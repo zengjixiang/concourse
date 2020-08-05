@@ -22,6 +22,16 @@ func (e ErrCustomResourceTypeVersionNotFound) Error() string {
 //go:generate counterfeiter . ResourceConfigFactory
 
 type ResourceConfigFactory interface {
+	FindOrCreateResourceConfigFromBaseType(
+		baseType string,
+		source atc.Source,
+	) (ResourceConfig, error)
+
+	FindOrCreateResourceConfigFromResourceCache(
+		resourceCache UsedResourceCache,
+		source atc.Source,
+	) (ResourceConfig, error)
+
 	FindOrCreateResourceConfig(
 		resourceType string,
 		source atc.Source,
@@ -67,6 +77,125 @@ func (f *resourceConfigFactory) FindResourceConfigByID(resourceConfigID int) (Re
 	}
 
 	return resourceConfig, true, nil
+}
+
+func (f *resourceConfigFactory) FindOrCreateResourceConfigFromBaseType(
+	baseType string,
+	source atc.Source,
+) (ResourceConfig, error) {
+	rc := &resourceConfig{
+		lockFactory: f.lockFactory,
+		conn:        f.conn,
+	}
+
+	tx, err := f.conn.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer Rollback(tx)
+
+	ubrt, found, err := BaseResourceType{Name: baseType}.Find(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	if !found {
+		return nil, BaseResourceTypeNotFoundError{Name: baseType}
+	}
+
+	rc.createdByBaseResourceType = ubrt
+
+	id, err := f.findOrCreate(tx, "base_resource_type_id", ubrt.ID, source)
+	if err != nil {
+		return nil, err
+	}
+
+	rc.id = id
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return rc, nil
+}
+
+func (f *resourceConfigFactory) FindOrCreateResourceConfigFromResourceCache(
+	cache UsedResourceCache,
+	source atc.Source,
+) (ResourceConfig, error) {
+	rc := &resourceConfig{
+		lockFactory: f.lockFactory,
+		conn:        f.conn,
+	}
+
+	tx, err := f.conn.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer Rollback(tx)
+
+	rc.createdByResourceCache = cache
+
+	id, err := f.findOrCreate(tx, "resource_cache", cache.ID(), source)
+	if err != nil {
+		return nil, err
+	}
+
+	rc.id = id
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return rc, nil
+}
+
+func (f *resourceConfigFactory) findOrCreate(tx Tx, parentColumnName string, parentID int, source atc.Source) (int, error) {
+	sourceHash := mapHash(source)
+
+	var id int
+
+	err := psql.Select("id").
+		From("resource_configs").
+		Where(sq.Eq{
+			parentColumnName: parentID,
+			"source_hash":    sourceHash,
+		}).
+		Suffix("FOR SHARE").
+		RunWith(tx).
+		QueryRow().
+		Scan(&id)
+	if err != nil && err != sql.ErrNoRows {
+		return 0, err
+	}
+
+	if id == 0 {
+		err := psql.Insert("resource_configs").
+			Columns(
+				parentColumnName,
+				"source_hash",
+			).
+			Values(
+				parentID,
+				sourceHash,
+			).
+			Suffix(`
+				ON CONFLICT (`+parentColumnName+`, source_hash) DO UPDATE SET
+					`+parentColumnName+` = ?,
+					source_hash = ?
+				RETURNING id
+			`, parentID, sourceHash).
+			RunWith(tx).
+			QueryRow().
+			Scan(&id)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return id, nil
 }
 
 func (f *resourceConfigFactory) FindOrCreateResourceConfig(

@@ -13,7 +13,7 @@ func NewVersionSourceFromPlan(getPlan *atc.GetPlan) VersionSource {
 			version: *getPlan.Version,
 		}
 	} else if getPlan.VersionFrom != nil {
-		return &PutStepVersionSource{
+		return &OtherStepVersionSource{
 			planID: *getPlan.VersionFrom,
 		}
 	} else {
@@ -35,11 +35,11 @@ func (p *StaticVersionSource) Version(RunState) (atc.Version, error) {
 
 var ErrPutStepVersionMissing = errors.New("version is missing from put step")
 
-type PutStepVersionSource struct {
+type OtherStepVersionSource struct {
 	planID atc.PlanID
 }
 
-func (p *PutStepVersionSource) Version(state RunState) (atc.Version, error) {
+func (p *OtherStepVersionSource) Version(state RunState) (atc.Version, error) {
 	var info runtime.VersionResult
 	if !state.Result(p.planID, &info) {
 		return atc.Version{}, ErrPutStepVersionMissing

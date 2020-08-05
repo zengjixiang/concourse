@@ -36,10 +36,6 @@ func (delegate *delegateFactory) TaskDelegate(build db.Build, planID atc.PlanID,
 	return NewTaskDelegate(build, planID, credVarsTracker, clock.NewClock())
 }
 
-func (delegate *delegateFactory) CheckDelegate(check db.Check, planID atc.PlanID, credVarsTracker vars.CredVarsTracker) exec.CheckDelegate {
-	return NewCheckDelegate(check, planID, credVarsTracker, clock.NewClock())
-}
-
 func (delegate *delegateFactory) BuildStepDelegate(build db.Build, planID atc.PlanID, credVarsTracker vars.CredVarsTracker) exec.BuildStepDelegate {
 	return NewBuildStepDelegate(build, planID, credVarsTracker, clock.NewClock())
 }
@@ -299,28 +295,6 @@ func (d *taskDelegate) Finished(logger lager.Logger, exitStatus exec.ExitStatus)
 	logger.Info("finished", lager.Data{"exit-status": exitStatus})
 }
 
-func NewCheckDelegate(check db.Check, planID atc.PlanID, credVarsTracker vars.CredVarsTracker, clock clock.Clock) exec.CheckDelegate {
-	return &checkDelegate{
-		BuildStepDelegate: NewBuildStepDelegate(nil, planID, credVarsTracker, clock),
-
-		eventOrigin: event.Origin{ID: event.OriginID(planID)},
-		check:       check,
-		clock:       clock,
-	}
-}
-
-type checkDelegate struct {
-	exec.BuildStepDelegate
-
-	check       db.Check
-	eventOrigin event.Origin
-	clock       clock.Clock
-}
-
-func (d *checkDelegate) SaveVersions(spanContext db.SpanContext, versions []atc.Version) error {
-	return d.check.SaveVersions(spanContext, versions)
-}
-
 type discardCloser struct {
 }
 
@@ -331,11 +305,6 @@ func (d discardCloser) Write(p []byte) (int, error) {
 func (d discardCloser) Close() error {
 	return nil
 }
-
-func (*checkDelegate) Stdout() io.Writer                                 { return discardCloser{} }
-func (*checkDelegate) Stderr() io.Writer                                 { return discardCloser{} }
-func (*checkDelegate) ImageVersionDetermined(db.UsedResourceCache) error { return nil }
-func (*checkDelegate) Errored(lager.Logger, string)                      { return }
 
 func NewBuildStepDelegate(
 	build db.Build,

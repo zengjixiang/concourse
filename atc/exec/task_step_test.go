@@ -588,7 +588,7 @@ var _ = Describe("TaskStep", func() {
 						ImageArtifact: imageArtifact,
 					}))
 
-					Expect(workerSpec.ResourceType).To(Equal(""))
+					Expect(workerSpec.BaseResourceType).To(Equal(""))
 				})
 
 				Describe("when task config specifies image and/or image resource as well as image artifact", func() {
@@ -617,7 +617,7 @@ var _ = Describe("TaskStep", func() {
 									ImageArtifact: imageArtifact,
 								}))
 
-								Expect(workerSpec.ResourceType).To(Equal(""))
+								Expect(workerSpec.BaseResourceType).To(Equal(""))
 							})
 						})
 
@@ -645,7 +645,7 @@ var _ = Describe("TaskStep", func() {
 									ImageArtifact: imageArtifact,
 								}))
 
-								Expect(workerSpec.ResourceType).To(Equal(""))
+								Expect(workerSpec.BaseResourceType).To(Equal(""))
 							})
 						})
 
@@ -673,7 +673,7 @@ var _ = Describe("TaskStep", func() {
 								Expect(containerSpec.ImageSpec).To(Equal(worker.ImageSpec{
 									ImageArtifact: imageArtifact,
 								}))
-								Expect(workerSpec.ResourceType).To(Equal(""))
+								Expect(workerSpec.BaseResourceType).To(Equal(""))
 							})
 						})
 					})
@@ -682,7 +682,7 @@ var _ = Describe("TaskStep", func() {
 
 			Context("when the image artifact is NOT registered in the artifact repo", func() {
 				It("returns a MissingTaskImageSourceError", func() {
-					Expect(stepErr).To(Equal(exec.MissingTaskImageSourceError{"some-image-artifact"}))
+					Expect(stepErr).To(Equal(exec.MissingImageSourceError{"some-image-artifact"}))
 				})
 
 				It("is not successful", func() {
@@ -720,11 +720,11 @@ var _ = Describe("TaskStep", func() {
 				}))
 
 				Expect(workerSpec).To(Equal(worker.WorkerSpec{
-					TeamID:        123,
-					Platform:      "some-platform",
-					ResourceTypes: interpolatedResourceTypes,
-					Tags:          []string{"step", "tags"},
-					ResourceType:  "docker",
+					TeamID:           123,
+					Platform:         "some-platform",
+					ResourceTypes:    interpolatedResourceTypes,
+					Tags:             []string{"step", "tags"},
+					BaseResourceType: "docker",
 				}))
 			})
 		})

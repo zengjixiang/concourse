@@ -1,11 +1,12 @@
 package builder
 
 import (
-	"code.cloudfoundry.org/lager"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+
+	"code.cloudfoundry.org/lager"
 
 	"github.com/concourse/concourse/atc"
 	"github.com/concourse/concourse/atc/creds"
@@ -22,7 +23,7 @@ type StepFactory interface {
 	GetStep(atc.Plan, exec.StepMetadata, db.ContainerMetadata, exec.GetDelegate) exec.Step
 	PutStep(atc.Plan, exec.StepMetadata, db.ContainerMetadata, exec.PutDelegate) exec.Step
 	TaskStep(atc.Plan, exec.StepMetadata, db.ContainerMetadata, exec.TaskDelegate) exec.Step
-	CheckStep(atc.Plan, exec.StepMetadata, db.ContainerMetadata, exec.CheckDelegate) exec.Step
+	CheckStep(atc.Plan, exec.StepMetadata, db.ContainerMetadata, exec.BuildStepDelegate) exec.Step
 	SetPipelineStep(atc.Plan, exec.StepMetadata, exec.BuildStepDelegate) exec.Step
 	LoadVarStep(atc.Plan, exec.StepMetadata, exec.BuildStepDelegate) exec.Step
 	ArtifactInputStep(atc.Plan, db.Build, exec.BuildStepDelegate) exec.Step
@@ -35,7 +36,6 @@ type DelegateFactory interface {
 	GetDelegate(db.Build, atc.PlanID, vars.CredVarsTracker) exec.GetDelegate
 	PutDelegate(db.Build, atc.PlanID, vars.CredVarsTracker) exec.PutDelegate
 	TaskDelegate(db.Build, atc.PlanID, vars.CredVarsTracker) exec.TaskDelegate
-	CheckDelegate(db.Check, atc.PlanID, vars.CredVarsTracker) exec.CheckDelegate
 	BuildStepDelegate(db.Build, atc.PlanID, vars.CredVarsTracker) exec.BuildStepDelegate
 }
 
@@ -104,32 +104,6 @@ func (builder *stepBuilder) BuildStepErrored(logger lager.Logger, build db.Build
 	builder.delegateFactory.BuildStepDelegate(build, build.PrivatePlan().ID, nil).Errored(logger, err.Error())
 }
 
-func (builder *stepBuilder) CheckStep(logger lager.Logger, check db.Check) (exec.Step, error) {
-
-	if check == nil {
-		return exec.IdentityStep{}, errors.New("must provide a check")
-	}
-
-	if check.Schema() != supportedSchema {
-		return exec.IdentityStep{}, errors.New("schema not supported")
-	}
-
-	pipeline, found, err := check.Pipeline()
-	if err != nil {
-		return exec.IdentityStep{}, errors.New(fmt.Sprintf("failed to find pipeline: %s", err.Error()))
-	}
-	if !found {
-		return exec.IdentityStep{}, errors.New("pipeline not found")
-	}
-
-	varss, err := pipeline.Variables(logger, builder.globalSecrets, builder.varSourcePool)
-	if err != nil {
-		return exec.IdentityStep{}, fmt.Errorf("failed to create pipeline variables: %s", err.Error())
-	}
-	credVarsTracker := vars.NewCredVarsTracker(varss, builder.redactSecrets)
-	return builder.buildCheckStep(check, check.Plan(), credVarsTracker), nil
-}
-
 func (builder *stepBuilder) buildStep(build db.Build, plan atc.Plan, credVarsTracker vars.CredVarsTracker) exec.Step {
 	if plan.Aggregate != nil {
 		return builder.buildAggregateStep(build, plan, credVarsTracker)
@@ -189,6 +163,10 @@ func (builder *stepBuilder) buildStep(build db.Build, plan atc.Plan, credVarsTra
 
 	if plan.Put != nil {
 		return builder.buildPutStep(build, plan, credVarsTracker)
+	}
+
+	if plan.Check != nil {
+		return builder.buildCheckStep(build, plan, credVarsTracker)
 	}
 
 	if plan.Retry != nil {
@@ -314,120 +292,71 @@ func (builder *stepBuilder) buildRetryStep(build db.Build, plan atc.Plan, credVa
 }
 
 func (builder *stepBuilder) buildGetStep(build db.Build, plan atc.Plan, credVarsTracker vars.CredVarsTracker) exec.Step {
-
-	containerMetadata := builder.containerMetadata(
-		build,
-		db.ContainerTypeGet,
-		plan.Get.Name,
-		plan.Attempts,
-	)
-
-	stepMetadata := builder.stepMetadata(
-		build,
-		builder.externalURL,
-	)
-
 	return builder.stepFactory.GetStep(
 		plan,
-		stepMetadata,
-		containerMetadata,
+		builder.stepMetadata(build),
+		builder.containerMetadata(
+			build,
+			db.ContainerTypeGet,
+			plan.Get.Name,
+			plan.Attempts,
+		),
 		builder.delegateFactory.GetDelegate(build, plan.ID, credVarsTracker),
 	)
 }
 
 func (builder *stepBuilder) buildPutStep(build db.Build, plan atc.Plan, credVarsTracker vars.CredVarsTracker) exec.Step {
-
-	containerMetadata := builder.containerMetadata(
-		build,
-		db.ContainerTypePut,
-		plan.Put.Name,
-		plan.Attempts,
-	)
-
-	stepMetadata := builder.stepMetadata(
-		build,
-		builder.externalURL,
-	)
-
 	return builder.stepFactory.PutStep(
 		plan,
-		stepMetadata,
-		containerMetadata,
+		builder.stepMetadata(build),
+		builder.containerMetadata(
+			build,
+			db.ContainerTypePut,
+			plan.Put.Name,
+			plan.Attempts,
+		),
 		builder.delegateFactory.PutDelegate(build, plan.ID, credVarsTracker),
 	)
 }
 
-func (builder *stepBuilder) buildCheckStep(check db.Check, plan atc.Plan, credVarsTracker vars.CredVarsTracker) exec.Step {
-
-	containerMetadata := db.ContainerMetadata{
-		Type: db.ContainerTypeCheck,
-	}
-
-	stepMetadata := exec.StepMetadata{
-		TeamID:                check.TeamID(),
-		TeamName:              check.TeamName(),
-		PipelineID:            check.PipelineID(),
-		PipelineName:          check.PipelineName(),
-		ResourceConfigScopeID: check.ResourceConfigScopeID(),
-		ResourceConfigID:      check.ResourceConfigID(),
-		BaseResourceTypeID:    check.BaseResourceTypeID(),
-		ExternalURL:           builder.externalURL,
-	}
+func (builder *stepBuilder) buildCheckStep(build db.Build, plan atc.Plan, credVarsTracker vars.CredVarsTracker) exec.Step {
 
 	return builder.stepFactory.CheckStep(
 		plan,
-		stepMetadata,
-		containerMetadata,
-		builder.delegateFactory.CheckDelegate(check, plan.ID, credVarsTracker),
+		builder.stepMetadata(build),
+		db.ContainerMetadata{
+			Type: db.ContainerTypeCheck,
+		},
+		builder.delegateFactory.BuildStepDelegate(build, plan.ID, credVarsTracker),
 	)
 }
 
 func (builder *stepBuilder) buildTaskStep(build db.Build, plan atc.Plan, credVarsTracker vars.CredVarsTracker) exec.Step {
-
-	containerMetadata := builder.containerMetadata(
-		build,
-		db.ContainerTypeTask,
-		plan.Task.Name,
-		plan.Attempts,
-	)
-
-	stepMetadata := builder.stepMetadata(
-		build,
-		builder.externalURL,
-	)
-
 	return builder.stepFactory.TaskStep(
 		plan,
-		stepMetadata,
-		containerMetadata,
+		builder.stepMetadata(build),
+		builder.containerMetadata(
+			build,
+			db.ContainerTypeTask,
+			plan.Task.Name,
+			plan.Attempts,
+		),
 		builder.delegateFactory.TaskDelegate(build, plan.ID, credVarsTracker),
 	)
 }
 
 func (builder *stepBuilder) buildSetPipelineStep(build db.Build, plan atc.Plan, credVarsTracker vars.CredVarsTracker) exec.Step {
-
-	stepMetadata := builder.stepMetadata(
-		build,
-		builder.externalURL,
-	)
-
 	return builder.stepFactory.SetPipelineStep(
 		plan,
-		stepMetadata,
+		builder.stepMetadata(build),
 		builder.delegateFactory.BuildStepDelegate(build, plan.ID, credVarsTracker),
 	)
 }
 
 func (builder *stepBuilder) buildLoadVarStep(build db.Build, plan atc.Plan, credVarsTracker vars.CredVarsTracker) exec.Step {
-
-	stepMetadata := builder.stepMetadata(
-		build,
-		builder.externalURL,
-	)
-
 	return builder.stepFactory.LoadVarStep(
 		plan,
-		stepMetadata,
+		builder.stepMetadata(build),
 		builder.delegateFactory.BuildStepDelegate(build, plan.ID, credVarsTracker),
 	)
 }
@@ -477,10 +406,7 @@ func (builder *stepBuilder) containerMetadata(
 	}
 }
 
-func (builder *stepBuilder) stepMetadata(
-	build db.Build,
-	externalURL string,
-) exec.StepMetadata {
+func (builder *stepBuilder) stepMetadata(build db.Build) exec.StepMetadata {
 	return exec.StepMetadata{
 		BuildID:      build.ID(),
 		BuildName:    build.Name(),
@@ -490,6 +416,6 @@ func (builder *stepBuilder) stepMetadata(
 		JobName:      build.JobName(),
 		PipelineID:   build.PipelineID(),
 		PipelineName: build.PipelineName(),
-		ExternalURL:  externalURL,
+		ExternalURL:  builder.externalURL,
 	}
 }

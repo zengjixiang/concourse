@@ -226,7 +226,6 @@ func (client *client) RunCheckStep(
 		owner,
 		containerMetadata,
 		containerSpec,
-		imageFetcherSpec.ResourceTypes,
 	)
 	if err != nil {
 		return CheckResult{}, fmt.Errorf("find or create container: %w", err)
@@ -297,7 +296,6 @@ func (client *client) RunTaskStep(
 		owner,
 		metadata,
 		containerSpec,
-		imageFetcherSpec.ResourceTypes,
 	)
 
 	if err != nil {
@@ -492,7 +490,6 @@ func (client *client) RunPutStep(
 		owner,
 		metadata,
 		containerSpec,
-		imageFetcherSpec.ResourceTypes,
 	)
 	if err != nil {
 		return PutResult{}, err

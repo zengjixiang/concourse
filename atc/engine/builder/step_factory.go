@@ -113,13 +113,15 @@ func (factory *stepFactory) CheckStep(
 	plan atc.Plan,
 	stepMetadata exec.StepMetadata,
 	containerMetadata db.ContainerMetadata,
-	delegate exec.CheckDelegate,
+	delegate exec.BuildStepDelegate,
 ) exec.Step {
 	containerMetadata.WorkingDirectory = resource.ResourcesDir("check")
 	// TODO (runtime/#4957): Placement Strategy should be abstracted out from step factory or step level concern
 	checkStep := exec.NewCheckStep(
 		plan.ID,
 		*plan.Check,
+		nil, // XXX: resource
+		nil, // XXX: resource config factory
 		stepMetadata,
 		factory.resourceFactory,
 		containerMetadata,

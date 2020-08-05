@@ -1,10 +1,11 @@
 package worker
 
 import (
-	"code.cloudfoundry.org/lager"
 	"context"
 	"io"
 	"io/ioutil"
+
+	"code.cloudfoundry.org/lager"
 
 	"github.com/concourse/concourse/atc"
 	"github.com/concourse/concourse/atc/db"
@@ -19,8 +20,6 @@ type ImageFactory interface {
 		volumeClient VolumeClient,
 		imageSpec ImageSpec,
 		teamID int,
-		delegate ImageFetchingDelegate,
-		resourceTypes atc.VersionedResourceTypes,
 	) (Image, error)
 }
 
@@ -51,6 +50,9 @@ type ImageFetchingDelegate interface {
 	RedactImageSource(source atc.Source) (atc.Source, error)
 }
 
+// XXX: how do we transfer this?
+//
+// oh wait, it's just in the image artifact.
 type ImageMetadata struct {
 	Env  []string `json:"env"`
 	User string   `json:"user"`

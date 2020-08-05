@@ -14,8 +14,8 @@ import (
 	"github.com/concourse/concourse/atc/worker/workerfakes"
 	"github.com/concourse/concourse/tracing"
 	"github.com/concourse/concourse/vars/varsfakes"
-	"go.opentelemetry.io/otel/api/trace"
 	"go.opentelemetry.io/otel/api/propagators"
+	"go.opentelemetry.io/otel/api/trace"
 	"go.opentelemetry.io/otel/api/trace/testtrace"
 
 	. "github.com/onsi/ginkgo"
@@ -25,7 +25,7 @@ import (
 var _ = Describe("CheckStep", func() {
 
 	var (
-		ctx context.Context
+		ctx    context.Context
 		cancel context.CancelFunc
 
 		fakeRunState        *execfakes.FakeRunState
@@ -221,7 +221,7 @@ var _ = Describe("CheckStep", func() {
 
 			It("with imagespec w/ resource type", func() {
 				Expect(containerSpec.ImageSpec).To(Equal(worker.ImageSpec{
-					ResourceType: "resource-type",
+					BaseResourceType: "resource-type",
 				}))
 			})
 
@@ -270,7 +270,7 @@ var _ = Describe("CheckStep", func() {
 			})
 
 			It("with resource type", func() {
-				Expect(workerSpec.ResourceType).To(Equal("resource-type"))
+				Expect(workerSpec.BaseResourceType).To(Equal("resource-type"))
 			})
 
 			It("with tags", func() {

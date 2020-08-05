@@ -714,7 +714,7 @@ var _ = Describe("Worker", func() {
 
 		Context("when the resource type is supported by the worker", func() {
 			BeforeEach(func() {
-				spec.ResourceType = "some-resource"
+				spec.BaseResourceType = "some-resource"
 			})
 
 			Context("when all of the requested tags are present", func() {
@@ -750,7 +750,7 @@ var _ = Describe("Worker", func() {
 
 		Context("when the resource type is a custom type supported by the worker", func() {
 			BeforeEach(func() {
-				spec.ResourceType = "custom-type-c"
+				spec.BaseResourceType = "custom-type-c"
 			})
 
 			It("returns true", func() {
@@ -772,7 +772,7 @@ var _ = Describe("Worker", func() {
 					},
 				}
 
-				spec.ResourceType = "some-resource"
+				spec.BaseResourceType = "some-resource"
 			})
 
 			It("returns true", func() {
@@ -808,7 +808,7 @@ var _ = Describe("Worker", func() {
 					},
 				}
 
-				spec.ResourceType = "circle-a"
+				spec.BaseResourceType = "circle-a"
 			})
 
 			It("returns false", func() {
@@ -818,7 +818,7 @@ var _ = Describe("Worker", func() {
 
 		Context("when the resource type is a custom type not supported by the worker", func() {
 			BeforeEach(func() {
-				spec.ResourceType = "unknown-custom-type"
+				spec.BaseResourceType = "unknown-custom-type"
 			})
 
 			It("returns false", func() {
@@ -828,7 +828,7 @@ var _ = Describe("Worker", func() {
 
 		Context("when the type is not supported by the worker", func() {
 			BeforeEach(func() {
-				spec.ResourceType = "some-other-resource"
+				spec.BaseResourceType = "some-other-resource"
 			})
 
 			It("returns false", func() {

@@ -156,7 +156,10 @@ type DoPlan []Plan
 type GetPlan struct {
 	Name string `json:"name,omitempty"`
 
-	Type        string   `json:"type"`
+	// TODO: make these one field that's either/or?
+	Type              string `json:"type"`
+	ImageArtifactName string `json:"image_artifact_name"`
+
 	Resource    string   `json:"resource"`
 	Source      Source   `json:"source"`
 	Params      Params   `json:"params,omitempty"`
@@ -168,8 +171,12 @@ type GetPlan struct {
 }
 
 type PutPlan struct {
-	Type     string        `json:"type"`
-	Name     string        `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
+
+	// TODO: make these one field that's either/or?
+	Type              string `json:"type"`
+	ImageArtifactName string `json:"image_artifact_name"`
+
 	Resource string        `json:"resource"`
 	Source   Source        `json:"source"`
 	Params   Params        `json:"params,omitempty"`
@@ -180,11 +187,19 @@ type PutPlan struct {
 }
 
 type CheckPlan struct {
-	Type        string  `json:"type"`
-	Name        string  `json:"name,omitempty"`
-	Source      Source  `json:"source"`
-	Tags        Tags    `json:"tags,omitempty"`
-	Timeout     string  `json:"timeout,omitempty"`
+	Name string `json:"name,omitempty"`
+
+	// TODO: make these one field that's either/or?
+	Type     string  `json:"type"`
+	TypeFrom *PlanID `json:"type_from"`
+
+	Source Source `json:"source"`
+	// XXX: used to determine scope and check interval
+	Resource string `json:"resource,omitempty"`
+
+	Tags    Tags   `json:"tags,omitempty"`
+	Timeout string `json:"timeout,omitempty"`
+
 	FromVersion Version `json:"from_version,omitempty"`
 
 	VersionedResourceTypes VersionedResourceTypes `json:"resource_types,omitempty"`
@@ -200,10 +215,11 @@ type TaskPlan struct {
 	Config     *TaskConfig `json:"config,omitempty"`
 	Vars       Params      `json:"vars,omitempty"`
 
-	Params            Params            `json:"params,omitempty"`
-	InputMapping      map[string]string `json:"input_mapping,omitempty"`
-	OutputMapping     map[string]string `json:"output_mapping,omitempty"`
-	ImageArtifactName string            `json:"image,omitempty"`
+	Params        Params            `json:"params,omitempty"`
+	InputMapping  map[string]string `json:"input_mapping,omitempty"`
+	OutputMapping map[string]string `json:"output_mapping,omitempty"`
+
+	ImageArtifactName string `json:"image,omitempty"`
 
 	VersionedResourceTypes VersionedResourceTypes `json:"resource_types,omitempty"`
 }

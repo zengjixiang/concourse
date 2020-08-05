@@ -198,17 +198,30 @@ func (c *checkFactory) TryCreateCheck(ctx context.Context, checkable Checkable, 
 		}
 	}
 
-	plan := atc.Plan{
-		Check: &atc.CheckPlan{
-			Name:        checkable.Name(),
-			Type:        checkable.Type(),
-			Source:      checkable.Source(),
-			Tags:        checkable.Tags(),
-			Timeout:     timeout.String(),
-			FromVersion: fromVersion,
+	checkPlanConfig := atc.CheckPlan{
+		Name:        checkable.Name(),
+		Source:      checkable.Source(),
+		Tags:        checkable.Tags(),
+		Timeout:     timeout.String(),
+		FromVersion: fromVersion,
 
-			VersionedResourceTypes: filteredTypes,
-		},
+		VersionedResourceTypes: filteredTypes,
+	}
+
+	// XXX
+	planFactory := atc.NewPlanFactory(0)
+
+	var plan atc.Plan
+	imagePlan, hasImage := versionedResourceTypes.FetchType(checkable.Type(), planFactory)
+	if hasImage {
+		checkPlanConfig.TypeFrom = &imagePlan.ID
+		plan = planFactory.NewPlan(atc.OnSuccessPlan{
+			Step: imagePlan,
+			Next: planFactory.NewPlan(checkPlanConfig),
+		})
+	} else {
+		checkPlanConfig.Type = checkable.Type()
+		plan = planFactory.NewPlan(checkPlanConfig)
 	}
 
 	meta := CheckMetadata{

@@ -182,7 +182,7 @@ var _ = Describe("GetStep", func() {
 		Expect(actualContainerSpec).To(Equal(
 			worker.ContainerSpec{
 				ImageSpec: worker.ImageSpec{
-					ResourceType: "some-resource-type",
+					BaseResourceType: "some-resource-type",
 				},
 				TeamID: stepMetadata.TeamID,
 				Env:    stepMetadata.Env(),
@@ -194,10 +194,10 @@ var _ = Describe("GetStep", func() {
 		_, _, _, _, actualWorkerSpec, _, _, _, _, _, _, _ := fakeClient.RunGetStepArgsForCall(0)
 		Expect(actualWorkerSpec).To(Equal(
 			worker.WorkerSpec{
-				ResourceType:  "some-resource-type",
-				Tags:          atc.Tags{"some", "tags"},
-				TeamID:        stepMetadata.TeamID,
-				ResourceTypes: interpolatedResourceTypes,
+				BaseResourceType: "some-resource-type",
+				Tags:             atc.Tags{"some", "tags"},
+				TeamID:           stepMetadata.TeamID,
+				ResourceTypes:    interpolatedResourceTypes,
 			},
 		))
 	})

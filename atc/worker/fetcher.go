@@ -82,7 +82,6 @@ func (f *fetcher) Fetch(
 		owner,
 		cache,
 		resource,
-		imageFetcherSpec.ResourceTypes,
 		containerSpec,
 		processSpec,
 		containerMetadata,

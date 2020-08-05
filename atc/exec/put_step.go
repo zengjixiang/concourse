@@ -146,7 +146,7 @@ func (step *PutStep) run(ctx context.Context, state RunState) error {
 
 	containerSpec := worker.ContainerSpec{
 		ImageSpec: worker.ImageSpec{
-			ResourceType: step.plan.Type,
+			BaseResourceType: step.plan.Type,
 		},
 		Tags:   step.plan.Tags,
 		TeamID: step.metadata.TeamID,
@@ -160,10 +160,9 @@ func (step *PutStep) run(ctx context.Context, state RunState) error {
 	tracing.Inject(ctx, &containerSpec)
 
 	workerSpec := worker.WorkerSpec{
-		ResourceType:  step.plan.Type,
-		Tags:          step.plan.Tags,
-		TeamID:        step.metadata.TeamID,
-		ResourceTypes: resourceTypes,
+		BaseResourceType: step.plan.Type,
+		Tags:             step.plan.Tags,
+		TeamID:           step.metadata.TeamID,
 	}
 
 	owner := db.NewBuildStepContainerOwner(step.metadata.BuildID, step.planID, step.metadata.TeamID)
