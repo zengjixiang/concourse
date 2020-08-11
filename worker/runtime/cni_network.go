@@ -3,7 +3,10 @@ package runtime
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/concourse/concourse/worker/runtime/iptables"
 	"github.com/containerd/containerd"
@@ -273,10 +276,64 @@ func (n cniNetwork) SetupRestrictedNetworks() error {
 	return nil
 }
 
+type searchEntry struct {
+	nameserver string
+}
+type otherEntry struct {
+	entry string
+}
+
+func (n cniNetwork) readHostResolvConf() ([]string, []otherEntry, error) {
+	hostResolvContents, err := ioutil.ReadFile("/etc/resolv.conf")
+	var otherEntries []otherEntry
+	var nameservers []string
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("reading-host-resolv-file", err)
+	}
+	entries := []string{}
+	for _, resolveEntry := range strings.Split(strings.TrimSpace(string(hostResolvContents), "\n")) {
+		if resolvEntry == "" {
+			continue
+		}
+
+		if strings.HasPrefix(resolvEntry, "search") {
+
+		}
+
+		if !strings.HasPrefix(resolvEntry, "nameserver") {
+			entries = append(entries, resolvEntry)
+			continue
+		}
+
+		pattern := regexp.MustCompile(`127\.\d{1,3}\.\d{1,3}\.\d{1,3}`)
+		if !pattern.MatchString(resolvEntry) {
+			nameserverFields := strings.Fields(resolvEntry)
+			if len(nameserverFields) != 2 {
+				continue
+			}
+			entries = append(entries, nameserverEntry(nameserverFields[1]))
+		}
+	}
+
+}
+
 func (n cniNetwork) generateResolvConfContents() []byte {
 	contents := ""
-	for _, n := range n.nameServers {
+	nameServers, other := n.readHostResolvConf()
+	//read nameserver
+	//read rest of the contents
+
+	if len(nameServers) == 0 {
+		nameServers = n.nameServers
+	}
+
+	for _, n := range nameServers {
 		contents = contents + "nameserver " + n + "\n"
+	}
+
+	for _, e := range other {
+		contents = contents + e.entry + "\n"
 	}
 
 	return []byte(contents)
