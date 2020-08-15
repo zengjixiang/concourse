@@ -101,6 +101,19 @@ func (validator *StepValidator) VisitTask(plan *TaskStep) error {
 	return nil
 }
 
+func (validator *StepValidator) VisitCheck(step *CheckStep) error {
+	// XXX test - and maybe see if there's more?
+	validator.pushContext(fmt.Sprintf(".check(%s)", step.Name))
+	defer validator.popContext()
+
+	warning := ValidateIdentifier(step.Name, validator.context...)
+	if warning != nil {
+		validator.recordWarning(*warning)
+	}
+
+	return nil
+}
+
 func (validator *StepValidator) VisitGet(step *GetStep) error {
 	validator.pushContext(fmt.Sprintf(".get(%s)", step.Name))
 	defer validator.popContext()

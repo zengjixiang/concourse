@@ -87,7 +87,7 @@ var _ = Describe("ResourceConfigCheckSessionLifecycle", func() {
 						},
 					},
 					Resources: atc.ResourceConfigs{},
-					ResourceTypes: atc.ResourceTypes{
+					ResourceTypes: atc.ResourceTypeConfigs{
 						{
 							Name: "some-type",
 							Type: "some-base-resource-type",
@@ -196,7 +196,7 @@ var _ = Describe("ResourceConfigCheckSessionLifecycle", func() {
 							},
 						},
 					},
-					ResourceTypes: atc.ResourceTypes{},
+					ResourceTypes: atc.ResourceTypeConfigs{},
 				}, defaultPipeline.ConfigVersion(), false)
 				Expect(err).NotTo(HaveOccurred())
 

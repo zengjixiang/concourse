@@ -17,11 +17,11 @@ const DefaultTeamName = "main"
 type Tags []string
 
 type Config struct {
-	Groups        GroupConfigs     `json:"groups,omitempty"`
-	VarSources    VarSourceConfigs `json:"var_sources,omitempty"`
-	Resources     ResourceConfigs  `json:"resources,omitempty"`
-	ResourceTypes ResourceTypes    `json:"resource_types,omitempty"`
-	Jobs          JobConfigs       `json:"jobs,omitempty"`
+	Groups        GroupConfigs        `json:"groups,omitempty"`
+	VarSources    VarSourceConfigs    `json:"var_sources,omitempty"`
+	Resources     ResourceConfigs     `json:"resources,omitempty"`
+	ResourceTypes ResourceTypeConfigs `json:"resource_types,omitempty"`
+	Jobs          JobConfigs          `json:"jobs,omitempty"`
 }
 
 func UnmarshalConfig(payload []byte, config interface{}) error {
@@ -170,21 +170,7 @@ func (c VarSourceConfigs) OrderByDependency() (VarSourceConfigs, error) {
 	return ordered, nil
 }
 
-type ResourceConfig struct {
-	Name         string  `json:"name"`
-	OldName      string  `json:"old_name,omitempty"`
-	Public       bool    `json:"public,omitempty"`
-	WebhookToken string  `json:"webhook_token,omitempty"`
-	Type         string  `json:"type"`
-	Source       Source  `json:"source"`
-	CheckEvery   string  `json:"check_every,omitempty"`
-	CheckTimeout string  `json:"check_timeout,omitempty"`
-	Tags         Tags    `json:"tags,omitempty"`
-	Version      Version `json:"version,omitempty"`
-	Icon         string  `json:"icon,omitempty"`
-}
-
-type ResourceType struct {
+type ResourceTypeConfig struct {
 	Name                 string `json:"name"`
 	Type                 string `json:"type"`
 	Source               Source `json:"source"`
@@ -197,20 +183,28 @@ type ResourceType struct {
 	UniqueVersionHistory bool   `json:"unique_version_history,omitempty"`
 }
 
-type ResourceTypes []ResourceType
+func (config ResourceTypeConfig) StepConfig() StepConfig {
+	return &CheckStep{
+		Name:         config.Name,
+		ResourceType: config.Name,
+		Tags:         config.Tags,
+	}
+}
 
-func (types ResourceTypes) Lookup(name string) (ResourceType, bool) {
+type ResourceTypeConfigs []ResourceTypeConfig
+
+func (types ResourceTypeConfigs) Lookup(name string) (ResourceTypeConfig, bool) {
 	for _, t := range types {
 		if t.Name == name {
 			return t, true
 		}
 	}
 
-	return ResourceType{}, false
+	return ResourceTypeConfig{}, false
 }
 
-func (types ResourceTypes) Without(name string) ResourceTypes {
-	newTypes := ResourceTypes{}
+func (types ResourceTypeConfigs) Without(name string) ResourceTypeConfigs {
+	newTypes := ResourceTypeConfigs{}
 	for _, t := range types {
 		if t.Name != name {
 			newTypes = append(newTypes, t)

@@ -179,6 +179,7 @@ type StepWrapper interface {
 // given StepVisitor.
 type StepVisitor interface {
 	VisitTask(*TaskStep) error
+	VisitCheck(*CheckStep) error
 	VisitGet(*GetStep) error
 	VisitPut(*PutStep) error
 	VisitSetPipeline(*SetPipelineStep) error
@@ -248,6 +249,10 @@ var StepPrecedence = []StepDetector{
 		New: func() StepConfig { return &PutStep{} },
 	},
 	{
+		Key: "check",
+		New: func() StepConfig { return &CheckStep{} },
+	},
+	{
 		Key: "get",
 		New: func() StepConfig { return &GetStep{} },
 	},
@@ -275,6 +280,27 @@ var StepPrecedence = []StepDetector{
 		Key: "aggregate",
 		New: func() StepConfig { return &AggregateStep{} },
 	},
+}
+
+type CheckStep struct {
+	Name string `json:"check"`
+	Tags Tags   `json:"tags,omitempty"`
+
+	// for updating config + scope
+	Resource     string `json:"resource,omitempty"`
+	ResourceType string `json:"resource_type,omitempty"`
+}
+
+func (step *CheckStep) ResourceName() string {
+	if step.Resource != "" {
+		return step.Resource
+	}
+
+	return step.Name
+}
+
+func (step *CheckStep) Visit(v StepVisitor) error {
+	return v.VisitCheck(step)
 }
 
 type GetStep struct {

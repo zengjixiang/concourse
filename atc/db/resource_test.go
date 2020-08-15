@@ -346,7 +346,7 @@ var _ = Describe("Resource", func() {
 			var created bool
 			var err error
 			config = atc.Config{
-				ResourceTypes: atc.ResourceTypes{
+				ResourceTypes: atc.ResourceTypeConfigs{
 					{
 						Name:                 "some-resourceType",
 						Type:                 "base",

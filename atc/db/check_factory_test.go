@@ -546,7 +546,7 @@ var _ = Describe("CheckFactory", func() {
 							},
 						},
 					},
-					ResourceTypes: atc.ResourceTypes{
+					ResourceTypes: atc.ResourceTypeConfigs{
 						{
 							Name: "some-type",
 							Type: "some-base-resource-type",

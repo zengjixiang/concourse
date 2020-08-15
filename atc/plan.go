@@ -200,6 +200,8 @@ type CheckPlan struct {
 	Tags    Tags   `json:"tags,omitempty"`
 	Timeout string `json:"timeout,omitempty"`
 
+	// XXX: maybe have the step figure this out on its own?
+	// would make e.g. image resources a lot easier
 	FromVersion Version `json:"from_version,omitempty"`
 
 	VersionedResourceTypes VersionedResourceTypes `json:"resource_types,omitempty"`

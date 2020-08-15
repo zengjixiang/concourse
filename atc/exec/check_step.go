@@ -32,6 +32,14 @@ type CheckStep struct {
 
 	// XXX: may be nil; remove when resource config scopes are removed and
 	// global resources is on by default
+	//
+	// XXX: actually this is still needed for setting the resource config on the
+	// resource - interesting...
+	//
+	// XXX: or not; should that happene elsewhere?
+	//
+	// XXX: it should happen here so we can be sure the config survives beyond
+	// the build.
 	resource db.Resource
 }
 
@@ -39,6 +47,7 @@ func NewCheckStep(
 	planID atc.PlanID,
 	plan atc.CheckPlan,
 	resource db.Resource,
+	scope db.ResourceConfigScope,
 	resourceConfigFactory db.ResourceConfigFactory,
 	metadata StepMetadata,
 	resourceFactory resource.ResourceFactory,
@@ -108,8 +117,9 @@ func (step *CheckStep) run(ctx context.Context, state RunState) error {
 		workerSpec.BaseResourceType = step.plan.Type
 
 		resourceConfig, err = step.resourceConfigFactory.FindOrCreateResourceConfigFromBaseType(
+			// XXX: build owner?
 			step.plan.Type,
-			step.plan.Source,
+			source,
 		)
 		if err != nil {
 			return fmt.Errorf("create config from base type: %w", err)
@@ -123,8 +133,9 @@ func (step *CheckStep) run(ctx context.Context, state RunState) error {
 		imageSpec = typeImage.Spec
 
 		resourceConfig, err = step.resourceConfigFactory.FindOrCreateResourceConfigFromResourceCache(
+			// XXX: build owner?
 			typeImage.Cache,
-			step.plan.Source,
+			source,
 		)
 		if err != nil {
 			return fmt.Errorf("create config from type image cache: %w", err)
@@ -195,6 +206,12 @@ func (step *CheckStep) run(ctx context.Context, state RunState) error {
 	err = scope.SaveVersions(db.NewSpanContext(ctx), result.Versions)
 	if err != nil {
 		return fmt.Errorf("save versions: %w", err)
+	}
+
+	// XXX: update resource's config and scope, now that versions have been saved
+	err = step.resource.SetResourceConfigScope(scope)
+	if err != nil {
+		return fmt.Errorf("update resource config scope: %w", err)
 	}
 
 	if len(result.Versions) > 0 {

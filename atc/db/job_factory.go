@@ -43,24 +43,6 @@ type SchedulerJob struct {
 	ResourceTypes atc.VersionedResourceTypes
 }
 
-type SchedulerResources []SchedulerResource
-
-type SchedulerResource struct {
-	Name   string
-	Type   string
-	Source atc.Source
-}
-
-func (resources SchedulerResources) Lookup(name string) (SchedulerResource, bool) {
-	for _, resource := range resources {
-		if resource.Name == name {
-			return resource, true
-		}
-	}
-
-	return SchedulerResource{}, false
-}
-
 func (j *jobFactory) JobsToSchedule() (SchedulerJobs, error) {
 	tx, err := j.conn.Begin()
 	if err != nil {
@@ -90,6 +72,36 @@ func (j *jobFactory) JobsToSchedule() (SchedulerJobs, error) {
 	var schedulerJobs SchedulerJobs
 	pipelineResourceTypes := make(map[int]ResourceTypes)
 	for _, job := range jobs {
+		var resourceTypes ResourceTypes
+		var found bool
+		resourceTypes, found = pipelineResourceTypes[job.PipelineID()]
+		if !found {
+			rows, err := resourceTypesQuery.
+				Where(sq.Eq{"r.pipeline_id": job.PipelineID()}).
+				OrderBy("r.name").
+				RunWith(tx).
+				Query()
+			if err != nil {
+				return nil, err
+			}
+
+			defer Close(rows)
+
+			for rows.Next() {
+				resourceType := newEmptyResourceType(j.conn, j.lockFactory)
+				err := scanResourceType(resourceType, rows)
+				if err != nil {
+					return nil, err
+				}
+
+				resourceTypes = append(resourceTypes, resourceType)
+			}
+
+			pipelineResourceTypes[job.PipelineID()] = resourceTypes
+		}
+
+		vrts := resourceTypes.Deserialize()
+
 		rows, err := tx.Query(`WITH inputs AS (
 				SELECT ji.resource_id from job_inputs ji where ji.job_id = $1
 				UNION
@@ -140,38 +152,10 @@ func (j *jobFactory) JobsToSchedule() (SchedulerJobs, error) {
 			})
 		}
 
-		var resourceTypes ResourceTypes
-		var found bool
-		resourceTypes, found = pipelineResourceTypes[job.PipelineID()]
-		if !found {
-			rows, err := resourceTypesQuery.
-				Where(sq.Eq{"r.pipeline_id": job.PipelineID()}).
-				OrderBy("r.name").
-				RunWith(tx).
-				Query()
-			if err != nil {
-				return nil, err
-			}
-
-			defer Close(rows)
-
-			for rows.Next() {
-				resourceType := newEmptyResourceType(j.conn, j.lockFactory)
-				err := scanResourceType(resourceType, rows)
-				if err != nil {
-					return nil, err
-				}
-
-				resourceTypes = append(resourceTypes, resourceType)
-			}
-
-			pipelineResourceTypes[job.PipelineID()] = resourceTypes
-		}
-
 		schedulerJobs = append(schedulerJobs, SchedulerJob{
 			Job:           job,
 			Resources:     schedulerResources,
-			ResourceTypes: resourceTypes.Deserialize(),
+			ResourceTypes: vrts,
 		})
 	}
 

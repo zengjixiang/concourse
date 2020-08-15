@@ -1,7 +1,7 @@
 package atc
 
 type VersionedResourceType struct {
-	ResourceType
+	ResourceTypeConfig
 
 	Version Version `json:"version"`
 }

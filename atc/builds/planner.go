@@ -17,7 +17,7 @@ func NewPlanner(planFactory atc.PlanFactory) Planner {
 
 func (planner Planner) Create(
 	planConfig atc.StepConfig,
-	resources db.SchedulerResources,
+	resources db.SchedulerResources, // TODO: move to atc.PlanResources
 	resourceTypes atc.VersionedResourceTypes,
 	inputs []db.BuildInput,
 ) (atc.Plan, error) {
@@ -82,6 +82,44 @@ func (visitor *planVisitor) VisitTask(step *atc.TaskStep) error {
 	return nil
 }
 
+func (visitor *planVisitor) VisitCheck(step *atc.CheckStep) error {
+	resourceName := step.Resource
+	if resourceName == "" {
+		resourceName = step.Name
+	}
+
+	resource, found := visitor.resources.Lookup(resourceName)
+	if !found {
+		return UnknownResourceError{resourceName}
+	}
+
+	checkPlanConfig := atc.CheckPlan{
+		Name: step.Name,
+
+		Resource: resourceName,
+		Source:   resource.Source,
+		Tags:     step.Tags,
+
+		VersionedResourceTypes: visitor.resourceTypes,
+	}
+
+	imagePlan, hasImagePlan := visitor.resourceTypes.FetchType(resource.Type, visitor.planFactory)
+	if hasImagePlan {
+		checkPlanConfig.TypeFrom = &imagePlan.ID
+
+		visitor.plan = visitor.planFactory.NewPlan(atc.OnSuccessPlan{
+			Step: imagePlan,
+			Next: visitor.planFactory.NewPlan(checkPlanConfig),
+		})
+	} else {
+		checkPlanConfig.Type = resource.Type
+
+		visitor.plan = visitor.planFactory.NewPlan(checkPlanConfig)
+	}
+
+	return nil
+}
+
 func (visitor *planVisitor) VisitGet(step *atc.GetStep) error {
 	resourceName := step.Resource
 	if resourceName == "" {
@@ -119,6 +157,7 @@ func (visitor *planVisitor) VisitGet(step *atc.GetStep) error {
 
 	imagePlan, hasImagePlan := visitor.resourceTypes.FetchType(resource.Type, visitor.planFactory)
 	if hasImagePlan {
+		// XXX: TypeFrom instead?
 		getPlanConfig.ImageArtifactName = "type:" + resource.Type
 
 		visitor.plan = visitor.planFactory.NewPlan(atc.OnSuccessPlan{

@@ -76,6 +76,7 @@ func (r *resourceConfig) OriginBaseResourceType() *UsedBaseResourceType {
 
 func (r *resourceConfig) FindOrCreateScope(resource Resource) (ResourceConfigScope, error) {
 	// XXX
+	// XXX accept nil resource for 'global'
 	return nil, nil
 }
 

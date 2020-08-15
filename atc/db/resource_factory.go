@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	sq "github.com/Masterminds/squirrel"
+	"github.com/concourse/concourse/atc"
 	"github.com/concourse/concourse/atc/db/lock"
 )
 
@@ -13,6 +14,25 @@ type ResourceFactory interface {
 	Resource(int) (Resource, bool, error)
 	VisibleResources([]string) ([]Resource, error)
 	AllResources() ([]Resource, error)
+	ResourcesToSchedule() (SchedulerResources, error)
+}
+
+type SchedulerResources []SchedulerResource
+
+type SchedulerResource struct {
+	Name   string
+	Type   string
+	Source atc.Source
+}
+
+func (resources SchedulerResources) Lookup(name string) (SchedulerResource, bool) {
+	for _, resource := range resources {
+		if resource.Name == name {
+			return resource, true
+		}
+	}
+
+	return SchedulerResource{}, false
 }
 
 type resourceFactory struct {

@@ -91,7 +91,7 @@ var _ = BeforeEach(func() {
 				Source: atc.Source{"some": "source"},
 			},
 		},
-		ResourceTypes: atc.ResourceTypes{
+		ResourceTypes: atc.ResourceTypeConfigs{
 			{
 				Name:   "some-resource-type",
 				Type:   "some-base-type",

@@ -11,6 +11,9 @@ type StepRecursor struct {
 	// OnTask will be invoked for any *TaskStep present in the StepConfig.
 	OnTask func(*TaskStep) error
 
+	// OnCheck will be invoked for any *CheckStep present in the StepConfig.
+	OnCheck func(*CheckStep) error
+
 	// OnGet will be invoked for any *GetStep present in the StepConfig.
 	OnGet func(*GetStep) error
 
@@ -28,6 +31,15 @@ type StepRecursor struct {
 func (recursor StepRecursor) VisitTask(step *TaskStep) error {
 	if recursor.OnTask != nil {
 		return recursor.OnTask(step)
+	}
+
+	return nil
+}
+
+// VisitCheck calls the OnCheck hook if configured.
+func (recursor StepRecursor) VisitCheck(step *CheckStep) error {
+	if recursor.OnCheck != nil {
+		return recursor.OnCheck(step)
 	}
 
 	return nil
