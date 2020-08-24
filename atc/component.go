@@ -21,6 +21,7 @@ const (
 	ComponentCollectorVolumes           = "collector_volumes"
 	ComponentCollectorWorkers           = "collector_workers"
 	ComponentCollectorPipelines         = "collector_pipelines"
+	ComponentK8s                        = "k8s_target"
 )
 
 type Component struct {

@@ -22,6 +22,7 @@ type Server struct {
 	interceptTimeoutFactory InterceptTimeoutFactory
 	interceptUpdateInterval time.Duration
 	containerRepository     db.ContainerRepository
+	containerSyncer         handles.Syncer
 	destroyer               gc.Destroyer
 	clock                   clock.Clock
 }
@@ -34,6 +35,7 @@ func NewServer(
 	interceptTimeoutFactory InterceptTimeoutFactory,
 	interceptUpdateInterval time.Duration,
 	containerRepository db.ContainerRepository,
+	containerSyncer handles.Syncer,
 	destroyer gc.Destroyer,
 	clock clock.Clock,
 ) *Server {
@@ -45,6 +47,7 @@ func NewServer(
 		interceptTimeoutFactory: interceptTimeoutFactory,
 		interceptUpdateInterval: interceptUpdateInterval,
 		containerRepository:     containerRepository,
+		containerSyncer:         containerSyncer,
 		destroyer:               destroyer,
 		clock:                   clock,
 	}

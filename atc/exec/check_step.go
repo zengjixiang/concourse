@@ -98,12 +98,6 @@ func (step *CheckStep) run(ctx context.Context, state RunState) error {
 		return fmt.Errorf("timeout parse: %w", err)
 	}
 
-	timeout, err := time.ParseDuration(step.plan.Timeout)
-	if err != nil {
-		logger.Error("failed-to-parse-timeout", err)
-		return err
-	}
-
 	containerSpec := worker.ContainerSpec{
 		ImageSpec: worker.ImageSpec{
 			ResourceType: step.plan.Type,

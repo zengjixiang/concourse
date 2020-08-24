@@ -224,10 +224,10 @@ func (k Client) RunCheckStep(
 	workerSpec worker.WorkerSpec,
 	strategy worker.ContainerPlacementStrategy,
 	containerMetadata db.ContainerMetadata,
-	resourceTypes atc.VersionedResourceTypes,
+	imageFetcherSpec worker.ImageFetcherSpec,
 	timeout time.Duration,
 	checkable resource.Resource,
-) ([]atc.Version, error) {
+) (worker.CheckResult, error) {
 
 	container, err := k.findOrCreateContainer(
 		owner,
@@ -235,7 +235,7 @@ func (k Client) RunCheckStep(
 		containerSpec,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("find or create container: %w", err)
+		return worker.CheckResult{}, fmt.Errorf("find or create container: %w", err)
 	}
 
 	result, err := checkable.Check(
@@ -246,10 +246,10 @@ func (k Client) RunCheckStep(
 		container,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("checking: %w", err)
+		return worker.CheckResult{}, fmt.Errorf("checking: %w", err)
 	}
 
-	return result, nil
+	return worker.CheckResult{Versions: result}, nil
 }
 
 func (k Client) FindContainer(

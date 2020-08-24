@@ -1004,10 +1004,7 @@ func (cmd *RunCommand) backendComponents(
 		resourceFactory,
 		containerSyncer,
 	)
-	// Potentially needed to comply with worker interface
-	//compressionLib
-	//workerAvailabilityPollingInterval,
-	//workerStatusPublishInterval)
+
 	if err != nil {
 		return nil, fmt.Errorf("failed configuring kubernetes worker client: %w", err)
 	}
@@ -1143,20 +1140,20 @@ func (cmd *RunCommand) backendComponents(
 		})
 	}
 
-	// TODO K8s
-	//target := kubernetes.NewTarget(
-	//	dbWorkerFactory,
-	//	containerSyncer,
-	//  k8sbackend,
-	//  dbContainerRepository,
-	//)
+	// cc: k8s worker -- replace this by a "beacon"
 	//
-	//// cc: k8s worker -- replace this by a "beacon"
-	////
-	//members = append(members, grouper.Member{
-	//	Name:   "k8s-target",
-	//	Runner: kubernetes.NewTargetRunner(target),
-	//})
+	components = append(components, RunnableComponent{
+		Component: atc.Component{
+			Name:     atc.ComponentK8s,
+			Interval: time.Second * 30,
+		},
+		Runnable: kubernetes.NewTarget(
+			dbWorkerFactory,
+			containerSyncer,
+			k8sbackend,
+			dbContainerRepository,
+		),
+	})
 
 	return components, err
 }

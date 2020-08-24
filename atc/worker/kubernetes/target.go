@@ -156,34 +156,16 @@ func (t target) destroyHandles(handles []string) error {
 	return nil
 }
 
-func NewTargetRunner(t Target) ifrit.RunFunc {
-	return func(signals <-chan os.Signal, ready chan<- struct{}) error {
-
-		ticker := time.NewTicker(10 * time.Second)
-		close(ready) // is this right?
-
-	loop:
-		for {
-			select {
-			case <-ticker.C:
-				err := t.Heartbeat()
-				if err != nil {
-					return fmt.Errorf("target heartbeat: %w", err)
-				}
-
-				err = t.Sync()
-				if err != nil {
-					return fmt.Errorf("sync: %w", err)
-				}
-			case <-signals:
-				err := t.Retire()
-				if err != nil {
-					return fmt.Errorf("target retire: %w", err)
-				}
-				break loop
-			}
-		}
-
-		return nil
+func (t target) Run(ctx context.Context) error {
+	// TODO k8s we are ignoring the ctx
+	err := t.Heartbeat()
+	if err != nil {
+		return fmt.Errorf("target heartbeat: %w", err)
 	}
+
+	err = t.Sync()
+	if err != nil {
+		return fmt.Errorf("sync: %w", err)
+	}
+	return nil
 }
