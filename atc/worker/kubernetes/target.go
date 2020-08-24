@@ -1,9 +1,9 @@
 package kubernetes
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"code.cloudfoundry.org/garden"
@@ -12,7 +12,6 @@ import (
 	"github.com/concourse/concourse/atc/handles"
 	"github.com/concourse/concourse/atc/worker/kubernetes/backend"
 	log "github.com/sirupsen/logrus"
-	"github.com/tedsuo/ifrit"
 )
 
 type Target interface {

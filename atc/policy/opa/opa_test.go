@@ -1,13 +1,14 @@
 package opa_test
 
 import (
-	"code.cloudfoundry.org/lager/lagertest"
 	"fmt"
-	"github.com/concourse/concourse/atc/policy"
-	"github.com/concourse/concourse/atc/policy/opa"
 	"net/http"
 	"net/http/httptest"
 	"time"
+
+	"code.cloudfoundry.org/lager/lagertest"
+	"github.com/concourse/concourse/atc/policy"
+	"github.com/concourse/concourse/atc/policy/opa"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

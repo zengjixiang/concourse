@@ -3,6 +3,8 @@ package containerserver
 import (
 	"time"
 
+	"github.com/concourse/concourse/atc/handles"
+
 	"code.cloudfoundry.org/clock"
 	"code.cloudfoundry.org/lager"
 	"github.com/concourse/concourse/atc/creds"
