@@ -1,4 +1,4 @@
-## Setup
+## Setup with Kind + Concourse Web on Docker
 1. brew install kind
 
 1. kind-config.yml
@@ -28,3 +28,11 @@
 	sed 's/https:\/\/.*6443/https:\/\/0.0.0.0:6443/' kind/kubeconfig.yml > /tmp/kubeconfig.yml
 	export KUBECONFIG=/tmp/kubeconfig.yml
 ```
+
+## To fix DNS within the pods
+```
+   kubectl edit -n kube-system configmap/coredns         # Replaced `forward . /etc/resolv.conf` with `forward . 8.8.8.8`
+```
+
+
+Note : See Makefile for additional setup like `init`
