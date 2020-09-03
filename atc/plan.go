@@ -1,30 +1,34 @@
 package atc
 
+//go:generate interpolate . interp.go
+
+//interpolate:generate Plan
+
 type Plan struct {
 	ID       PlanID `json:"id"`
 	Attempts []int  `json:"attempts,omitempty"`
 
-	Get         *GetPlan         `json:"get,omitempty"`
-	Put         *PutPlan         `json:"put,omitempty"`
-	Check       *CheckPlan       `json:"check,omitempty"`
-	Task        *TaskPlan        `json:"task,omitempty"`
-	SetPipeline *SetPipelinePlan `json:"set_pipeline,omitempty"`
-	LoadVar     *LoadVarPlan     `json:"load_var,omitempty"`
+	Get         *GetPlan         `json:"get,omitempty" interpolate:"subtypes,export"`
+	Put         *PutPlan         `json:"put,omitempty" interpolate:"subtypes,export"`
+	Check       *CheckPlan       `json:"check,omitempty" interpolate:"subtypes,export"`
+	Task        *TaskPlan        `json:"task,omitempty" interpolate:"subtypes,export"`
+	SetPipeline *SetPipelinePlan `json:"set_pipeline,omitempty" interpolate:"subtypes,export"`
+	LoadVar     *LoadVarPlan     `json:"load_var,omitempty" interpolate:"subtypes,export"`
 
-	Do         *DoPlan         `json:"do,omitempty"`
-	InParallel *InParallelPlan `json:"in_parallel,omitempty"`
-	Aggregate  *AggregatePlan  `json:"aggregate,omitempty"`
-	Across     *AcrossPlan     `json:"across,omitempty"`
+	Do         *DoPlan         `json:"do,omitempty" interpolate:"subtypes,values=subtypes,export"`
+	InParallel *InParallelPlan `json:"in_parallel,omitempty" interpolate:"subtypes,export"`
+	Aggregate  *AggregatePlan  `json:"aggregate,omitempty" interpolate:"subtypes,values=subtypes,export"`
+	Across     *AcrossPlan     `json:"across,omitempty" interpolate:"subtypes,export"`
 
-	OnSuccess *OnSuccessPlan `json:"on_success,omitempty"`
-	OnFailure *OnFailurePlan `json:"on_failure,omitempty"`
-	OnAbort   *OnAbortPlan   `json:"on_abort,omitempty"`
-	OnError   *OnErrorPlan   `json:"on_error,omitempty"`
-	Ensure    *EnsurePlan    `json:"ensure,omitempty"`
+	OnSuccess *OnSuccessPlan `json:"on_success,omitempty" interpolate:"subtypes,export"`
+	OnFailure *OnFailurePlan `json:"on_failure,omitempty" interpolate:"subtypes,export"`
+	OnAbort   *OnAbortPlan   `json:"on_abort,omitempty" interpolate:"subtypes,export"`
+	OnError   *OnErrorPlan   `json:"on_error,omitempty" interpolate:"subtypes,export"`
+	Ensure    *EnsurePlan    `json:"ensure,omitempty" interpolate:"subtypes,export"`
 
-	Try     *TryPlan     `json:"try,omitempty"`
-	Timeout *TimeoutPlan `json:"timeout,omitempty"`
-	Retry   *RetryPlan   `json:"retry,omitempty"`
+	Try     *TryPlan     `json:"try,omitempty" interpolate:"subtypes,export"`
+	Timeout *TimeoutPlan `json:"timeout,omitempty" interpolate:"subtypes,export"`
+	Retry   *RetryPlan   `json:"retry,omitempty" interpolate:"subtypes,values=subtypes,export"`
 
 	// used for 'fly execute'
 	ArtifactInput  *ArtifactInputPlan  `json:"artifact_input,omitempty"`
@@ -118,61 +122,61 @@ type ArtifactOutputPlan struct {
 }
 
 type OnAbortPlan struct {
-	Step Plan `json:"step"`
-	Next Plan `json:"on_abort"`
+	Step Plan `json:"step" interpolate:"subtypes"`
+	Next Plan `json:"on_abort" interpolate:"subtypes"`
 }
 
 type OnErrorPlan struct {
-	Step Plan `json:"step"`
-	Next Plan `json:"on_error"`
+	Step Plan `json:"step" interpolate:"subtypes"`
+	Next Plan `json:"on_error" interpolate:"subtypes"`
 }
 
 type OnFailurePlan struct {
-	Step Plan `json:"step"`
-	Next Plan `json:"on_failure"`
+	Step Plan `json:"step" interpolate:"subtypes"`
+	Next Plan `json:"on_failure" interpolate:"subtypes"`
 }
 
 type EnsurePlan struct {
-	Step Plan `json:"step"`
-	Next Plan `json:"ensure"`
+	Step Plan `json:"step" interpolate:"subtypes"`
+	Next Plan `json:"ensure" interpolate:"subtypes"`
 }
 
 type OnSuccessPlan struct {
-	Step Plan `json:"step"`
-	Next Plan `json:"on_success"`
+	Step Plan `json:"step" interpolate:"subtypes"`
+	Next Plan `json:"on_success" interpolate:"subtypes"`
 }
 
 type TimeoutPlan struct {
-	Step     Plan   `json:"step"`
-	Duration string `json:"duration"`
+	Step     Plan   `json:"step" interpolate:"subtypes"`
+	Duration string `json:"duration" interpolate:"root"`
 }
 
 type TryPlan struct {
-	Step Plan `json:"step"`
+	Step Plan `json:"step" interpolate:"subtypes"`
 }
 
 type AggregatePlan []Plan
 
 type InParallelPlan struct {
-	Steps    []Plan `json:"steps"`
-	Limit    int    `json:"limit,omitempty"`
-	FailFast bool   `json:"fail_fast,omitempty"`
+	Steps    []Plan `json:"steps" interpolate:"subtypes,values=subtypes"`
+	Limit    int    `json:"limit,omitempty" interpolate:"root"`
+	FailFast bool   `json:"fail_fast,omitempty" interpolate:"root"`
 }
 
 type AcrossPlan struct {
-	Vars     []AcrossVar     `json:"vars"`
-	Steps    []VarScopedPlan `json:"steps"`
-	FailFast bool            `json:"fail_fast,omitempty"`
+	Vars     []AcrossVar     `json:"vars" interpolate:"subtypes,values=subtypes"`
+	Steps    []VarScopedPlan `json:"steps" interpolate:"subtypes,values=subtypes"`
+	FailFast bool            `json:"fail_fast,omitempty" interpolate:"root"`
 }
 
 type AcrossVar struct {
 	Var         string        `json:"name"`
 	Values      []interface{} `json:"values"`
-	MaxInFlight int           `json:"max_in_flight"`
+	MaxInFlight int           `json:"max_in_flight" interpolate:"root"`
 }
 
 type VarScopedPlan struct {
-	Step   Plan          `json:"step"`
+	Step   Plan          `json:"step" interpolate:"subtypes"`
 	Values []interface{} `json:"values"`
 }
 
@@ -184,10 +188,10 @@ type GetPlan struct {
 	Type        string   `json:"type"`
 	Resource    string   `json:"resource"`
 	Source      Source   `json:"source"`
-	Params      Params   `json:"params,omitempty"`
+	Params      Params   `json:"params,omitempty" interpolate:"root,keys=root,values=root"`
 	Version     *Version `json:"version,omitempty"`
 	VersionFrom *PlanID  `json:"version_from,omitempty"`
-	Tags        Tags     `json:"tags,omitempty"`
+	Tags        Tags     `json:"tags,omitempty" interpolate:"root,values=root"`
 
 	VersionedResourceTypes VersionedResourceTypes `json:"resource_types,omitempty"`
 }
@@ -197,9 +201,9 @@ type PutPlan struct {
 	Name     string        `json:"name,omitempty"`
 	Resource string        `json:"resource"`
 	Source   Source        `json:"source"`
-	Params   Params        `json:"params,omitempty"`
-	Tags     Tags          `json:"tags,omitempty"`
-	Inputs   *InputsConfig `json:"inputs,omitempty"`
+	Params   Params        `json:"params,omitempty" interpolate:"root,keys=root,values=root"`
+	Tags     Tags          `json:"tags,omitempty" interpolate:"root,values=root"`
+	Inputs   *InputsConfig `json:"inputs,omitempty" interpolate:"root"`
 
 	VersionedResourceTypes VersionedResourceTypes `json:"resource_types,omitempty"`
 }
@@ -216,36 +220,36 @@ type CheckPlan struct {
 }
 
 type TaskPlan struct {
-	Name string `json:"name,omitempty"`
+	Name string `json:"name,omitempty" interpolate:"root"`
 
-	Privileged bool `json:"privileged"`
-	Tags       Tags `json:"tags,omitempty"`
+	Privileged bool `json:"privileged" interpolate:"root"`
+	Tags       Tags `json:"tags,omitempty" interpolate:"root,values=root"`
 
-	ConfigPath string      `json:"config_path,omitempty"`
-	Config     *TaskConfig `json:"config,omitempty"`
-	Vars       Params      `json:"vars,omitempty"`
+	ConfigPath string      `json:"config_path,omitempty" interpolate:"root"`
+	Config     *TaskConfig `json:"config,omitempty" interpolate:"root"`
+	Vars       Params      `json:"vars,omitempty" interpolate:"root,keys=root,values=root"`
 
-	Params            Params            `json:"params,omitempty"`
-	InputMapping      map[string]string `json:"input_mapping,omitempty"`
-	OutputMapping     map[string]string `json:"output_mapping,omitempty"`
-	ImageArtifactName string            `json:"image,omitempty"`
+	Params            Params            `json:"params,omitempty" interpolate:"root,keys=root,values=root"`
+	InputMapping      map[string]string `json:"input_mapping,omitempty" interpolate:"root,keys=root,values=root"`
+	OutputMapping     map[string]string `json:"output_mapping,omitempty" interpolate:"root,keys=root,values=root"`
+	ImageArtifactName string            `json:"image,omitempty" interpolate:"root"`
 
 	VersionedResourceTypes VersionedResourceTypes `json:"resource_types,omitempty"`
 }
 
 type SetPipelinePlan struct {
-	Name     string                 `json:"name"`
-	File     string                 `json:"file"`
-	Team     string                 `json:"team,omitempty"`
-	Vars     map[string]interface{} `json:"vars,omitempty"`
-	VarFiles []string               `json:"var_files,omitempty"`
+	Name     string                 `json:"name" interpolate:"root"`
+	File     string                 `json:"file" interpolate:"root"`
+	Team     string                 `json:"team,omitempty" interpolate:"root"`
+	Vars     map[string]interface{} `json:"vars,omitempty" interpolate:"root,keys=root,values=root"`
+	VarFiles []string               `json:"var_files,omitempty" interpolate:"root,values=root"`
 }
 
 type LoadVarPlan struct {
-	Name   string `json:"name"`
-	File   string `json:"file"`
-	Format string `json:"format,omitempty"`
-	Reveal bool   `json:"reveal,omitempty"`
+	Name   string `json:"name" interpolate:"root"`
+	File   string `json:"file" interpolate:"root"`
+	Format string `json:"format,omitempty" interpolate:"root"`
+	Reveal bool   `json:"reveal,omitempty" interpolate:"root"`
 }
 
 type RetryPlan []Plan

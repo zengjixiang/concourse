@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+
+	"github.com/aoldershaw/interpolate"
 )
 
 type MetadataField struct {
@@ -26,6 +28,22 @@ func (src Source) MarshalJSON() ([]byte, error) {
 	return json.Marshal(strKeys)
 }
 
+//interpolate:skip MarshalJSON Source
+
+func (i interpSource) MarshalJSON() ([]byte, error) {
+	if i.Ref != "" {
+		return json.Marshal(i.Ref)
+	}
+	src, err := i.Interpolate(interpolate.ResolverFunc(func(varName string) (interface{}, error) {
+		return "((" + varName + "))", nil
+	}))
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(src)
+}
+
 type Params map[string]interface{}
 
 func (ps Params) MarshalJSON() ([]byte, error) {
@@ -39,6 +57,22 @@ func (ps Params) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(strKeys)
+}
+
+//interpolate:skip MarshalJSON Params
+
+func (i interpParams) MarshalJSON() ([]byte, error) {
+	if i.Ref != "" {
+		return json.Marshal(i.Ref)
+	}
+	ps, err := i.Interpolate(interpolate.ResolverFunc(func(varName string) (interface{}, error) {
+		return "((" + varName + "))", nil
+	}))
+	if err != nil {
+		return nil, err
+	}
+
+	return json.Marshal(ps)
 }
 
 type Version map[string]string

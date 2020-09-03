@@ -6,44 +6,45 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/aoldershaw/interpolate"
 	"sigs.k8s.io/yaml"
 )
 
 type TaskConfig struct {
 	// The platform the task must run on (e.g. linux, windows).
-	Platform string `json:"platform,omitempty"`
+	Platform string `json:"platform,omitempty" interpolate:"root"`
 
 	// Optional string specifying an image to use for the build. Depending on the
 	// platform, this may or may not be required (e.g. Windows/OS X vs. Linux).
-	RootfsURI string `json:"rootfs_uri,omitempty"`
+	RootfsURI string `json:"rootfs_uri,omitempty" interpolate:"root"`
 
-	ImageResource *ImageResource `json:"image_resource,omitempty"`
+	ImageResource *ImageResource `json:"image_resource,omitempty" interpolate:"root"`
 
 	// Limits to set on the Task Container
-	Limits *ContainerLimits `json:"container_limits,omitempty"`
+	Limits *ContainerLimits `json:"container_limits,omitempty" interpolate:"root"`
 
 	// Parameters to pass to the task via environment variables.
-	Params TaskEnv `json:"params,omitempty"`
+	Params TaskEnv `json:"params,omitempty" interpolate:"root,keys=root,values=root"`
 
 	// Script to execute.
-	Run TaskRunConfig `json:"run,omitempty"`
+	Run TaskRunConfig `json:"run,omitempty" interpolate:"root"`
 
 	// The set of (logical, name-only) inputs required by the task.
-	Inputs []TaskInputConfig `json:"inputs,omitempty"`
+	Inputs []TaskInputConfig `json:"inputs,omitempty" interpolate:"root,values=root"`
 
 	// The set of (logical, name-only) outputs provided by the task.
-	Outputs []TaskOutputConfig `json:"outputs,omitempty"`
+	Outputs []TaskOutputConfig `json:"outputs,omitempty" interpolate:"root,values=root"`
 
 	// Path to cached directory that will be shared between builds for the same task.
-	Caches []TaskCacheConfig `json:"caches,omitempty"`
+	Caches []TaskCacheConfig `json:"caches,omitempty" interpolate:"root,values=root"`
 }
 
 type ImageResource struct {
-	Type   string `json:"type"`
-	Source Source `json:"source"`
+	Type   string `json:"type" interpolate:"root"`
+	Source Source `json:"source" interpolate:"root,keys=root,values=root"`
 
-	Params  Params  `json:"params,omitempty"`
-	Version Version `json:"version,omitempty"`
+	Params  Params  `json:"params,omitempty" interpolate:"root,keys=root,values=root"`
+	Version Version `json:"version,omitempty" interpolate:"root,keys=root,values=root"`
 }
 
 func NewTaskConfig(configBytes []byte) (TaskConfig, error) {
@@ -117,32 +118,32 @@ func (config TaskConfig) validateInputContainsNames() []string {
 }
 
 type TaskRunConfig struct {
-	Path string   `json:"path"`
-	Args []string `json:"args,omitempty"`
-	Dir  string   `json:"dir,omitempty"`
+	Path string   `json:"path" interpolate:"root"`
+	Args []string `json:"args,omitempty" interpolate:"root,values=root"`
+	Dir  string   `json:"dir,omitempty" interpolate:"root"`
 
 	// The user that the task will run as (defaults to whatever the docker image specifies)
-	User string `json:"user,omitempty"`
+	User string `json:"user,omitempty" interpolate:"root"`
 }
 
 type TaskInputConfig struct {
-	Name     string `json:"name"`
-	Path     string `json:"path,omitempty"`
-	Optional bool   `json:"optional,omitempty"`
+	Name     string `json:"name" interpolate:"root"`
+	Path     string `json:"path,omitempty" interpolate:"root"`
+	Optional bool   `json:"optional,omitempty" interpolate:"root"`
 }
 
 type TaskOutputConfig struct {
-	Name string `json:"name"`
-	Path string `json:"path,omitempty"`
+	Name string `json:"name" interpolate:"root"`
+	Path string `json:"path,omitempty" interpolate:"root"`
 }
 
 type TaskCacheConfig struct {
-	Path string `json:"path,omitempty"`
+	Path string `json:"path,omitempty" interpolate:"root"`
 }
 
 type TaskEnv map[string]string
 
-func (te *TaskEnv) UnmarshalJSON(p []byte) error {
+func (t *TaskEnv) UnmarshalJSON(p []byte) error {
 	raw := map[string]CoercedString{}
 	err := json.Unmarshal(p, &raw)
 	if err != nil {
@@ -154,7 +155,29 @@ func (te *TaskEnv) UnmarshalJSON(p []byte) error {
 		m[k] = string(v)
 	}
 
-	*te = m
+	*t = m
+
+	return nil
+}
+
+//interpolate:skip UnmarshalJSON TaskEnv
+
+func (i *interpTaskEnv) UnmarshalJSON(p []byte) error {
+	if err := json.Unmarshal(p, &i.Ref); err == nil {
+		return nil
+	}
+	raw := map[string]CoercedString{}
+	err := json.Unmarshal(p, &raw)
+	if err != nil {
+		return err
+	}
+
+	m := map[interpolate.String]interpolate.String{}
+	for k, v := range raw {
+		m[interpolate.String(k)] = interpolate.String(v)
+	}
+
+	i.Val = m
 
 	return nil
 }

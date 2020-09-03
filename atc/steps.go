@@ -710,7 +710,7 @@ type InputsConfig struct {
 	Specified []string
 }
 
-func (c *InputsConfig) UnmarshalJSON(inputs []byte) error {
+func (i *InputsConfig) UnmarshalJSON(inputs []byte) error {
 	var data interface{}
 
 	err := json.Unmarshal(inputs, &data)
@@ -720,8 +720,8 @@ func (c *InputsConfig) UnmarshalJSON(inputs []byte) error {
 
 	switch actual := data.(type) {
 	case string:
-		c.All = actual == "all"
-		c.Detect = actual == "detect"
+		i.All = actual == "all"
+		i.Detect = actual == "detect"
 	case []interface{}:
 		inputs := []string{}
 
@@ -734,7 +734,7 @@ func (c *InputsConfig) UnmarshalJSON(inputs []byte) error {
 			inputs = append(inputs, strings.TrimSpace(str))
 		}
 
-		c.Specified = inputs
+		i.Specified = inputs
 	default:
 		return errors.New("unknown type for put inputs")
 	}

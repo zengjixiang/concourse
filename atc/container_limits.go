@@ -11,8 +11,8 @@ import (
 var memoryRegex = regexp.MustCompile(`^([0-9]+)([GMK]?[B])?$`)
 
 type ContainerLimits struct {
-	CPU    *CPULimit    `json:"cpu,omitempty"`
-	Memory *MemoryLimit `json:"memory,omitempty"`
+	CPU    *CPULimit    `json:"cpu,omitempty" interpolate:"root"`
+	Memory *MemoryLimit `json:"memory,omitempty" interpolate:"root"`
 }
 
 type CPULimit uint64
