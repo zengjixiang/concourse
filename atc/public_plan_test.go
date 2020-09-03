@@ -9,15 +9,15 @@ import (
 var _ = Describe("Plan", func() {
 	Describe("Public", func() {
 		It("returns a sanitized form of the plan", func() {
-			plan := atc.Plan{
+			plan := atc.PlanSkeleton{
 				ID: "0",
-				Aggregate: &atc.AggregatePlan{
-					atc.Plan{
+				Aggregate: &atc.AggregatePlanSkeleton{
+					atc.PlanSkeleton{
 						ID: "1",
-						Aggregate: &atc.AggregatePlan{
-							atc.Plan{
+						Aggregate: &atc.AggregatePlanSkeleton{
+							atc.PlanSkeleton{
 								ID: "2",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -28,9 +28,9 @@ var _ = Describe("Plan", func() {
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "3",
-						Get: &atc.GetPlan{
+						Get: &atc.GetPlanSkeleton{
 							Type:     "type",
 							Name:     "name",
 							Resource: "resource",
@@ -41,9 +41,9 @@ var _ = Describe("Plan", func() {
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "4",
-						Put: &atc.PutPlan{
+						Put: &atc.PutPlanSkeleton{
 							Type:     "type",
 							Name:     "name",
 							Resource: "resource",
@@ -53,9 +53,9 @@ var _ = Describe("Plan", func() {
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "4.2",
-						Check: &atc.CheckPlan{
+						Check: &atc.CheckPlanSkeleton{
 							Type:   "type",
 							Name:   "name",
 							Source: atc.Source{"some": "source"},
@@ -63,9 +63,9 @@ var _ = Describe("Plan", func() {
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "5",
-						Task: &atc.TaskPlan{
+						Task: &atc.TaskPlanSkeleton{
 							Name:       "name",
 							Privileged: true,
 							Tags:       atc.Tags{"tags"},
@@ -76,12 +76,12 @@ var _ = Describe("Plan", func() {
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "6",
-						Ensure: &atc.EnsurePlan{
-							Step: atc.Plan{
+						Ensure: &atc.EnsurePlanSkeleton{
+							Step: atc.PlanSkeleton{
 								ID: "7",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -89,9 +89,9 @@ var _ = Describe("Plan", func() {
 									},
 								},
 							},
-							Next: atc.Plan{
+							Next: atc.PlanSkeleton{
 								ID: "8",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -102,12 +102,12 @@ var _ = Describe("Plan", func() {
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "9",
-						OnSuccess: &atc.OnSuccessPlan{
-							Step: atc.Plan{
+						OnSuccess: &atc.OnSuccessPlanSkeleton{
+							Step: atc.PlanSkeleton{
 								ID: "10",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -115,9 +115,9 @@ var _ = Describe("Plan", func() {
 									},
 								},
 							},
-							Next: atc.Plan{
+							Next: atc.PlanSkeleton{
 								ID: "11",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -128,12 +128,12 @@ var _ = Describe("Plan", func() {
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "12",
-						OnFailure: &atc.OnFailurePlan{
-							Step: atc.Plan{
+						OnFailure: &atc.OnFailurePlanSkeleton{
+							Step: atc.PlanSkeleton{
 								ID: "13",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -141,9 +141,9 @@ var _ = Describe("Plan", func() {
 									},
 								},
 							},
-							Next: atc.Plan{
+							Next: atc.PlanSkeleton{
 								ID: "14",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -154,12 +154,12 @@ var _ = Describe("Plan", func() {
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "15",
-						OnAbort: &atc.OnAbortPlan{
-							Step: atc.Plan{
+						OnAbort: &atc.OnAbortPlanSkeleton{
+							Step: atc.PlanSkeleton{
 								ID: "16",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -167,9 +167,9 @@ var _ = Describe("Plan", func() {
 									},
 								},
 							},
-							Next: atc.Plan{
+							Next: atc.PlanSkeleton{
 								ID: "17",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -180,12 +180,12 @@ var _ = Describe("Plan", func() {
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "18",
-						Try: &atc.TryPlan{
-							Step: atc.Plan{
+						Try: &atc.TryPlanSkeleton{
+							Step: atc.PlanSkeleton{
 								ID: "19",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -196,12 +196,12 @@ var _ = Describe("Plan", func() {
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "20",
-						Timeout: &atc.TimeoutPlan{
-							Step: atc.Plan{
+						Timeout: &atc.TimeoutPlanSkeleton{
+							Step: atc.PlanSkeleton{
 								ID: "21",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -213,12 +213,12 @@ var _ = Describe("Plan", func() {
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "22",
-						Do: &atc.DoPlan{
-							atc.Plan{
+						Do: &atc.DoPlanSkeleton{
+							atc.PlanSkeleton{
 								ID: "23",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -229,12 +229,12 @@ var _ = Describe("Plan", func() {
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "24",
-						Retry: &atc.RetryPlan{
-							atc.Plan{
+						Retry: &atc.RetryPlanSkeleton{
+							atc.PlanSkeleton{
 								ID: "25",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -242,9 +242,9 @@ var _ = Describe("Plan", func() {
 									},
 								},
 							},
-							atc.Plan{
+							atc.PlanSkeleton{
 								ID: "26",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -252,9 +252,9 @@ var _ = Describe("Plan", func() {
 									},
 								},
 							},
-							atc.Plan{
+							atc.PlanSkeleton{
 								ID: "27",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -265,12 +265,12 @@ var _ = Describe("Plan", func() {
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "28",
-						OnAbort: &atc.OnAbortPlan{
-							Step: atc.Plan{
+						OnAbort: &atc.OnAbortPlanSkeleton{
+							Step: atc.PlanSkeleton{
 								ID: "29",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -278,9 +278,9 @@ var _ = Describe("Plan", func() {
 									},
 								},
 							},
-							Next: atc.Plan{
+							Next: atc.PlanSkeleton{
 								ID: "30",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -291,27 +291,27 @@ var _ = Describe("Plan", func() {
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "31",
-						ArtifactInput: &atc.ArtifactInputPlan{
+						ArtifactInput: &atc.ArtifactInputPlanSkeleton{
 							ArtifactID: 17,
 							Name:       "some-name",
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "32",
-						ArtifactOutput: &atc.ArtifactOutputPlan{
+						ArtifactOutput: &atc.ArtifactOutputPlanSkeleton{
 							Name: "some-name",
 						},
 					},
 
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "33",
-						OnError: &atc.OnErrorPlan{
-							Step: atc.Plan{
+						OnError: &atc.OnErrorPlanSkeleton{
+							Step: atc.PlanSkeleton{
 								ID: "34",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -319,9 +319,9 @@ var _ = Describe("Plan", func() {
 									},
 								},
 							},
-							Next: atc.Plan{
+							Next: atc.PlanSkeleton{
 								ID: "35",
-								Task: &atc.TaskPlan{
+								Task: &atc.TaskPlanSkeleton{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
 									Config: &atc.TaskConfig{
@@ -331,15 +331,15 @@ var _ = Describe("Plan", func() {
 							},
 						},
 					},
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "36",
-						InParallel: &atc.InParallelPlan{
+						InParallel: &atc.InParallelPlanSkeleton{
 							Limit:    1,
 							FailFast: true,
-							Steps: []atc.Plan{
+							Steps: []atc.PlanSkeleton{
 								{
 									ID: "37",
-									Task: &atc.TaskPlan{
+									Task: &atc.TaskPlanSkeleton{
 										Name:       "name",
 										ConfigPath: "some/config/path.yml",
 										Config: &atc.TaskConfig{
@@ -350,9 +350,9 @@ var _ = Describe("Plan", func() {
 							},
 						},
 					},
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "38",
-						SetPipeline: &atc.SetPipelinePlan{
+						SetPipeline: &atc.SetPipelinePlanSkeleton{
 							Name:     "some-pipeline",
 							Team:     "some-team",
 							File:     "some-file",
@@ -360,9 +360,9 @@ var _ = Describe("Plan", func() {
 							Vars:     map[string]interface{}{"k1": "v1"},
 						},
 					},
-					atc.Plan{
+					atc.PlanSkeleton{
 						ID: "39",
-						Across: &atc.AcrossPlan{
+						Across: &atc.AcrossPlanSkeleton{
 							Vars: []atc.AcrossVar{
 								{
 									Var:         "v1",
@@ -375,11 +375,11 @@ var _ = Describe("Plan", func() {
 									MaxInFlight: 2,
 								},
 							},
-							Steps: []atc.VarScopedPlan{
+							Steps: []atc.VarScopedPlanSkeleton{
 								{
-									Step: atc.Plan{
+									Step: atc.PlanSkeleton{
 										ID: "40",
-										Task: &atc.TaskPlan{
+										Task: &atc.TaskPlanSkeleton{
 											Name:       "name",
 											ConfigPath: "some/config/path.yml",
 											Config: &atc.TaskConfig{

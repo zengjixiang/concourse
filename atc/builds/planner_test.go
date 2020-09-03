@@ -3,10 +3,12 @@ package builds_test
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/concourse/concourse/atc"
 	"github.com/concourse/concourse/atc/builds"
 	"github.com/concourse/concourse/atc/db"
+	"github.com/concourse/concourse/vars/interp"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -46,7 +48,7 @@ var resourceTypes = atc.VersionedResourceTypes{
 		ResourceType: atc.ResourceType{
 			Name:   "some-resource-type",
 			Type:   "some-base-resource-type",
-			Source: atc.Source{"some": "type-source"},
+			Source: atc.InterpSource{"some": interp.Any{Value: "type-source"}}.Wrap(),
 		},
 		Version: atc.Version{"some": "type-version"},
 	},
@@ -58,9 +60,9 @@ var factoryTests = []PlannerTest{
 		Config: &atc.GetStep{
 			Name:     "some-name",
 			Resource: "some-resource",
-			Params:   atc.Params{"some": "params"},
+			Params:   atc.InterpParams{"some": interp.Any{Value: "params"}}.Wrap(),
 			Version:  &atc.VersionConfig{Pinned: atc.Version{"doesnt": "matter"}},
-			Tags:     atc.Tags{"tag-1", "tag-2"},
+			Tags:     atc.InterpTags{"tag-1", "tag-2"}.Wrap(),
 		},
 		Inputs: []db.BuildInput{
 			{
@@ -110,10 +112,10 @@ var factoryTests = []PlannerTest{
 		Config: &atc.PutStep{
 			Name:      "some-name",
 			Resource:  "some-resource",
-			Params:    atc.Params{"some": "params"},
-			Tags:      atc.Tags{"tag-1", "tag-2"},
-			Inputs:    &atc.InputsConfig{All: true},
-			GetParams: atc.Params{"some": "get-params"},
+			Params:    atc.InterpParams{"some": interp.Any{Value: "params"}}.Wrap(),
+			Tags:      atc.InterpTags{"tag-1", "tag-2"}.Wrap(),
+			Inputs:    atc.InputsConfig{All: true}.WrapPtr(),
+			GetParams: atc.InterpParams{"some": interp.Any{Value: "get-params"}}.Wrap(),
 		},
 		Inputs: []db.BuildInput{
 			{
@@ -175,17 +177,17 @@ var factoryTests = []PlannerTest{
 
 		Config: &atc.TaskStep{
 			Name:       "some-task",
-			Privileged: true,
-			Config: &atc.TaskConfig{
+			Privileged: interp.StaticBool(true),
+			Config: atc.InterpTaskConfig{
 				Platform: "linux",
-				Run:      atc.TaskRunConfig{Path: "hello"},
-			},
+				Run:      atc.InterpTaskRunConfig{Path: "hello"}.Wrap(),
+			}.WrapPtr(),
 			ConfigPath:        "some-task-file",
-			Vars:              atc.Params{"some": "vars"},
-			Params:            atc.Params{"SOME": "PARAMS"},
-			Tags:              atc.Tags{"tag-1", "tag-2"},
-			InputMapping:      map[string]string{"generic": "specific"},
-			OutputMapping:     map[string]string{"specific": "generic"},
+			Vars:              atc.InterpParams{"some": interp.Any{Value: "vars"}}.Wrap(),
+			Params:            atc.InterpParams{"SOME": interp.Any{Value: "PARAMS"}}.Wrap(),
+			Tags:              atc.InterpTags{"tag-1", "tag-2"}.Wrap(),
+			InputMapping:      atc.InterpArtifactMapping{"generic": "specific"}.Wrap(),
+			OutputMapping:     atc.InterpArtifactMapping{"specific": "generic"}.Wrap(),
 			ImageArtifactName: "some-image",
 		},
 
@@ -222,8 +224,8 @@ var factoryTests = []PlannerTest{
 		Config: &atc.SetPipelineStep{
 			Name:     "some-pipeline",
 			File:     "some-pipeline-file",
-			Vars:     atc.Params{"some": "vars"},
-			VarFiles: []string{"file-1", "file-2"},
+			Vars:     atc.InterpParams{"some": interp.Any{Value: "vars"}}.Wrap(),
+			VarFiles: atc.InterpStringList{"file-1", "file-2"}.Wrap(),
 		},
 
 		PlanJSON: `{
@@ -243,7 +245,7 @@ var factoryTests = []PlannerTest{
 			Name:   "some-var",
 			File:   "some-var-file",
 			Format: "raw",
-			Reveal: true,
+			Reveal: interp.StaticBool(true),
 		},
 
 		PlanJSON: `{
@@ -326,8 +328,8 @@ var factoryTests = []PlannerTest{
 
 		Config: &atc.InParallelStep{
 			Config: atc.InParallelConfig{
-				Limit:    3,
-				FailFast: true,
+				Limit:    interp.StaticInt(3),
+				FailFast: interp.StaticBool(true),
 				Steps: []atc.Step{
 					{
 						Config: &atc.LoadVarStep{
@@ -419,12 +421,12 @@ var factoryTests = []PlannerTest{
 			},
 			Vars: []atc.AcrossVarConfig{
 				{
-					Var: "var1",
-					Values: []interface{}{"a1", "a2"},
-					MaxInFlight: &atc.MaxInFlightConfig{All: true},
+					Var:         "var1",
+					Values:      []interface{}{"a1", "a2"},
+					MaxInFlight: atc.MaxInFlightConfig{All: true}.WrapPtr(),
 				},
 				{
-					Var: "var2",
+					Var:    "var2",
 					Values: []interface{}{"b1", "b2"},
 				},
 			},
@@ -498,7 +500,7 @@ var factoryTests = []PlannerTest{
 				Name: "some-var",
 				File: "some-file",
 			},
-			Duration: "1h",
+			Duration: atc.Duration(1 * time.Hour).Wrap(),
 		},
 
 		PlanJSON: `{
@@ -749,7 +751,7 @@ func (test PlannerTest) Run(s *PlannerSuite) {
 	}
 
 	seenIDs := map[atc.PlanID]bool{}
-	actualPlan.Each(func(p *atc.Plan) {
+	actualPlan.Each(func(p *atc.PlanSkeleton) {
 		s.NotEmpty(p.ID)
 
 		// make sure all IDs are unique

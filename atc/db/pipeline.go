@@ -62,7 +62,7 @@ type Pipeline interface {
 	Builds(page Page) ([]Build, Pagination, error)
 
 	CreateOneOffBuild() (Build, error)
-	CreateStartedBuild(plan atc.Plan) (Build, error)
+	CreateStartedBuild(plan atc.PlanSkeleton) (Build, error)
 
 	BuildsWithTime(page Page) ([]Build, Pagination, error)
 
@@ -1037,7 +1037,7 @@ func (p *pipeline) CreateOneOffBuild() (Build, error) {
 	return build, nil
 }
 
-func (p *pipeline) CreateStartedBuild(plan atc.Plan) (Build, error) {
+func (p *pipeline) CreateStartedBuild(plan atc.PlanSkeleton) (Build, error) {
 	tx, err := p.conn.Begin()
 	if err != nil {
 		return nil, err

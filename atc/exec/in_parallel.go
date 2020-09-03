@@ -7,21 +7,19 @@ import (
 	"os"
 	"runtime/debug"
 
+	"github.com/concourse/concourse/vars/interp"
 	"github.com/hashicorp/go-multierror"
 )
 
 // InParallelStep is a step of steps to run in parallel.
 type InParallelStep struct {
 	steps    []Step
-	limit    int
-	failFast bool
+	limit    interp.Int
+	failFast interp.Bool
 }
 
 // InParallel constructs an InParallelStep.
-func InParallel(steps []Step, limit int, failFast bool) InParallelStep {
-	if limit < 1 {
-		limit = len(steps)
-	}
+func InParallel(steps []Step, limit interp.Int, failFast interp.Bool) InParallelStep {
 	return InParallelStep{
 		steps:    steps,
 		limit:    limit,
@@ -40,6 +38,7 @@ func InParallel(steps []Step, limit int, failFast bool) InParallelStep {
 // After all steps finish, their errors (if any) will be collected and returned as a
 // single error.
 func (step InParallelStep) Run(ctx context.Context, state RunState) error {
+	limit, err := step.limit.I.Interpolate()
 	var (
 		errs          = make(chan error, len(step.steps))
 		sem           = make(chan bool, step.limit)

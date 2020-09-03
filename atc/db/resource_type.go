@@ -166,7 +166,7 @@ type resourceType struct {
 	type_                 string
 	privileged            bool
 	source                atc.Source
-	params                atc.Params
+	params                atc.InterpParams
 	tags                  atc.Tags
 	version               atc.Version
 	checkEvery            string

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/concourse/concourse/vars/interp"
 	"golang.org/x/crypto/ssh"
 	"sigs.k8s.io/yaml"
 
@@ -14,7 +15,13 @@ import (
 const ConfigVersionHeader = "X-Concourse-Config-Version"
 const DefaultTeamName = "main"
 
+//go:generate go run github.com/concourse/concourse/vars/interp/interpgen . interpolate.go
+
 type Tags []string
+
+//interpgen:generate InterpTags
+
+type InterpTags []interp.String
 
 type Config struct {
 	Groups        GroupConfigs     `json:"groups,omitempty"`
@@ -171,30 +178,30 @@ func (c VarSourceConfigs) OrderByDependency() (VarSourceConfigs, error) {
 }
 
 type ResourceConfig struct {
-	Name         string  `json:"name"`
-	OldName      string  `json:"old_name,omitempty"`
-	Public       bool    `json:"public,omitempty"`
-	WebhookToken string  `json:"webhook_token,omitempty"`
-	Type         string  `json:"type"`
-	Source       Source  `json:"source"`
-	CheckEvery   string  `json:"check_every,omitempty"`
-	CheckTimeout string  `json:"check_timeout,omitempty"`
-	Tags         Tags    `json:"tags,omitempty"`
-	Version      Version `json:"version,omitempty"`
-	Icon         string  `json:"icon,omitempty"`
+	Name         string           `json:"name"`
+	OldName      string           `json:"old_name,omitempty"`
+	Public       bool             `json:"public,omitempty"`
+	WebhookToken string           `json:"webhook_token,omitempty"`
+	Type         string           `json:"type"`
+	Source       Source           `json:"source"`
+	CheckEvery   string           `json:"check_every,omitempty"`
+	CheckTimeout string           `json:"check_timeout,omitempty"`
+	Tags         interpInterpTags `json:"tags,omitempty"`
+	Version      Version          `json:"version,omitempty"`
+	Icon         string           `json:"icon,omitempty"`
 }
 
 type ResourceType struct {
-	Name                 string `json:"name"`
-	Type                 string `json:"type"`
-	Source               Source `json:"source"`
-	Privileged           bool   `json:"privileged,omitempty"`
-	CheckEvery           string `json:"check_every,omitempty"`
-	Tags                 Tags   `json:"tags,omitempty"`
-	Params               Params `json:"params,omitempty"`
-	CheckSetupError      string `json:"check_setup_error,omitempty"`
-	CheckError           string `json:"check_error,omitempty"`
-	UniqueVersionHistory bool   `json:"unique_version_history,omitempty"`
+	Name                 string             `json:"name"`
+	Type                 string             `json:"type"`
+	Source               Source             `json:"source"`
+	Privileged           bool               `json:"privileged,omitempty"`
+	CheckEvery           string             `json:"check_every,omitempty"`
+	Tags                 interpInterpTags   `json:"tags,omitempty"`
+	Params               interpInterpParams `json:"params,omitempty"`
+	CheckSetupError      string             `json:"check_setup_error,omitempty"`
+	CheckError           string             `json:"check_error,omitempty"`
+	UniqueVersionHistory bool               `json:"unique_version_history,omitempty"`
 }
 
 type ResourceTypes []ResourceType

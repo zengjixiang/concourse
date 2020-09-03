@@ -30,8 +30,8 @@ type JobInput struct {
 
 type JobInputParams struct {
 	JobInput
-	Params Params `json:"params,omitempty"`
-	Tags   Tags   `json:"tags,omitempty"`
+	Params interpInterpParams `json:"params,omitempty"`
+	Tags   interpInterpTags   `json:"tags,omitempty"`
 }
 
 type JobOutput struct {

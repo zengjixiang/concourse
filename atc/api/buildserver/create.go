@@ -14,7 +14,7 @@ func (s *Server) CreateBuild(team db.Team) http.Handler {
 	hLog := s.logger.Session("create-build")
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var plan atc.Plan
+		var plan atc.PlanSkeleton
 		err := json.NewDecoder(r.Body).Decode(&plan)
 		if err != nil {
 			hLog.Info("malformed-request", lager.Data{"error": err.Error()})

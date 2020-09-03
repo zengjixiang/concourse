@@ -13,7 +13,7 @@ import (
 func (s *Server) CreateBuild(pipeline db.Pipeline) http.Handler {
 	logger := s.logger.Session("create-build")
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var plan atc.Plan
+		var plan atc.PlanSkeleton
 		err := json.NewDecoder(r.Body).Decode(&plan)
 		if err != nil {
 			logger.Info("malformed-request", lager.Data{"error": err.Error()})

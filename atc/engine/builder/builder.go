@@ -129,7 +129,7 @@ func (builder *stepBuilder) CheckStep(logger lager.Logger, check db.Check) (exec
 	return builder.buildCheckStep(check, check.Plan(), buildVars), nil
 }
 
-func (builder *stepBuilder) buildStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 	if plan.Aggregate != nil {
 		return builder.buildAggregateStep(build, plan, buildVars)
 	}
@@ -209,7 +209,7 @@ func (builder *stepBuilder) buildStep(build db.Build, plan atc.Plan, buildVars *
 	return exec.IdentityStep{}
 }
 
-func (builder *stepBuilder) buildAggregateStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildAggregateStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 
 	agg := exec.AggregateStep{}
 
@@ -222,7 +222,7 @@ func (builder *stepBuilder) buildAggregateStep(build db.Build, plan atc.Plan, bu
 	return agg
 }
 
-func (builder *stepBuilder) buildParallelStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildParallelStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 
 	var steps []exec.Step
 
@@ -235,7 +235,7 @@ func (builder *stepBuilder) buildParallelStep(build db.Build, plan atc.Plan, bui
 	return exec.InParallel(steps, plan.InParallel.Limit, plan.InParallel.FailFast)
 }
 
-func (builder *stepBuilder) buildAcrossStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildAcrossStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 	step := builder.buildAcrossInParallelStep(build, 0, *plan.Across, buildVars)
 
 	stepMetadata := builder.stepMetadata(
@@ -256,7 +256,7 @@ func (builder *stepBuilder) buildAcrossStep(build db.Build, plan atc.Plan, build
 	)
 }
 
-func (builder *stepBuilder) buildAcrossInParallelStep(build db.Build, varIndex int, plan atc.AcrossPlan, buildVars *vars.BuildVariables) exec.InParallelStep {
+func (builder *stepBuilder) buildAcrossInParallelStep(build db.Build, varIndex int, plan atc.AcrossPlanSkeleton, buildVars *vars.BuildVariables) exec.InParallelStep {
 	if varIndex == len(plan.Vars)-1 {
 		var steps []exec.Step
 		for _, step := range plan.Steps {
@@ -287,7 +287,7 @@ func (builder *stepBuilder) buildAcrossInParallelStep(build db.Build, varIndex i
 	return exec.InParallel(substeps, plan.Vars[varIndex].MaxInFlight, plan.FailFast)
 }
 
-func (builder *stepBuilder) buildDoStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildDoStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 
 	var step exec.Step = exec.IdentityStep{}
 
@@ -301,21 +301,21 @@ func (builder *stepBuilder) buildDoStep(build db.Build, plan atc.Plan, buildVars
 	return step
 }
 
-func (builder *stepBuilder) buildTimeoutStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildTimeoutStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 	innerPlan := plan.Timeout.Step
 	innerPlan.Attempts = plan.Attempts
 	step := builder.buildStep(build, innerPlan, buildVars)
 	return exec.Timeout(step, plan.Timeout.Duration)
 }
 
-func (builder *stepBuilder) buildTryStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildTryStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 	innerPlan := plan.Try.Step
 	innerPlan.Attempts = plan.Attempts
 	step := builder.buildStep(build, innerPlan, buildVars)
 	return exec.Try(step)
 }
 
-func (builder *stepBuilder) buildOnAbortStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildOnAbortStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 	plan.OnAbort.Step.Attempts = plan.Attempts
 	step := builder.buildStep(build, plan.OnAbort.Step, buildVars)
 	plan.OnAbort.Next.Attempts = plan.Attempts
@@ -323,7 +323,7 @@ func (builder *stepBuilder) buildOnAbortStep(build db.Build, plan atc.Plan, buil
 	return exec.OnAbort(step, next)
 }
 
-func (builder *stepBuilder) buildOnErrorStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildOnErrorStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 	plan.OnError.Step.Attempts = plan.Attempts
 	step := builder.buildStep(build, plan.OnError.Step, buildVars)
 	plan.OnError.Next.Attempts = plan.Attempts
@@ -331,7 +331,7 @@ func (builder *stepBuilder) buildOnErrorStep(build db.Build, plan atc.Plan, buil
 	return exec.OnError(step, next)
 }
 
-func (builder *stepBuilder) buildOnSuccessStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildOnSuccessStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 	plan.OnSuccess.Step.Attempts = plan.Attempts
 	step := builder.buildStep(build, plan.OnSuccess.Step, buildVars)
 	plan.OnSuccess.Next.Attempts = plan.Attempts
@@ -339,7 +339,7 @@ func (builder *stepBuilder) buildOnSuccessStep(build db.Build, plan atc.Plan, bu
 	return exec.OnSuccess(step, next)
 }
 
-func (builder *stepBuilder) buildOnFailureStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildOnFailureStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 	plan.OnFailure.Step.Attempts = plan.Attempts
 	step := builder.buildStep(build, plan.OnFailure.Step, buildVars)
 	plan.OnFailure.Next.Attempts = plan.Attempts
@@ -347,7 +347,7 @@ func (builder *stepBuilder) buildOnFailureStep(build db.Build, plan atc.Plan, bu
 	return exec.OnFailure(step, next)
 }
 
-func (builder *stepBuilder) buildEnsureStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildEnsureStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 	plan.Ensure.Step.Attempts = plan.Attempts
 	step := builder.buildStep(build, plan.Ensure.Step, buildVars)
 	plan.Ensure.Next.Attempts = plan.Attempts
@@ -355,7 +355,7 @@ func (builder *stepBuilder) buildEnsureStep(build db.Build, plan atc.Plan, build
 	return exec.Ensure(step, next)
 }
 
-func (builder *stepBuilder) buildRetryStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildRetryStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 	steps := []exec.Step{}
 
 	for index, innerPlan := range *plan.Retry {
@@ -368,7 +368,7 @@ func (builder *stepBuilder) buildRetryStep(build db.Build, plan atc.Plan, buildV
 	return exec.Retry(steps...)
 }
 
-func (builder *stepBuilder) buildGetStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildGetStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 
 	containerMetadata := builder.containerMetadata(
 		build,
@@ -390,7 +390,7 @@ func (builder *stepBuilder) buildGetStep(build db.Build, plan atc.Plan, buildVar
 	)
 }
 
-func (builder *stepBuilder) buildPutStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildPutStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 
 	containerMetadata := builder.containerMetadata(
 		build,
@@ -412,7 +412,7 @@ func (builder *stepBuilder) buildPutStep(build db.Build, plan atc.Plan, buildVar
 	)
 }
 
-func (builder *stepBuilder) buildCheckStep(check db.Check, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildCheckStep(check db.Check, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 
 	containerMetadata := db.ContainerMetadata{
 		Type: db.ContainerTypeCheck,
@@ -437,7 +437,7 @@ func (builder *stepBuilder) buildCheckStep(check db.Check, plan atc.Plan, buildV
 	)
 }
 
-func (builder *stepBuilder) buildTaskStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildTaskStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 
 	containerMetadata := builder.containerMetadata(
 		build,
@@ -459,7 +459,7 @@ func (builder *stepBuilder) buildTaskStep(build db.Build, plan atc.Plan, buildVa
 	)
 }
 
-func (builder *stepBuilder) buildSetPipelineStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildSetPipelineStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 
 	stepMetadata := builder.stepMetadata(
 		build,
@@ -473,7 +473,7 @@ func (builder *stepBuilder) buildSetPipelineStep(build db.Build, plan atc.Plan, 
 	)
 }
 
-func (builder *stepBuilder) buildLoadVarStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildLoadVarStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 
 	stepMetadata := builder.stepMetadata(
 		build,
@@ -487,7 +487,7 @@ func (builder *stepBuilder) buildLoadVarStep(build db.Build, plan atc.Plan, buil
 	)
 }
 
-func (builder *stepBuilder) buildArtifactInputStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildArtifactInputStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 
 	return builder.stepFactory.ArtifactInputStep(
 		plan,
@@ -496,7 +496,7 @@ func (builder *stepBuilder) buildArtifactInputStep(build db.Build, plan atc.Plan
 	)
 }
 
-func (builder *stepBuilder) buildArtifactOutputStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
+func (builder *stepBuilder) buildArtifactOutputStep(build db.Build, plan atc.PlanSkeleton, buildVars *vars.BuildVariables) exec.Step {
 
 	return builder.stepFactory.ArtifactOutputStep(
 		plan,

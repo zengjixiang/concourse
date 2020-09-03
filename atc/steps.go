@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
+
+	"github.com/concourse/concourse/vars/interp"
 )
 
 // Step is an "envelope" type, acting as a wrapper to handle the marshaling and
@@ -293,13 +296,13 @@ var StepPrecedence = []StepDetector{
 }
 
 type GetStep struct {
-	Name     string         `json:"get"`
-	Resource string         `json:"resource,omitempty"`
-	Version  *VersionConfig `json:"version,omitempty"`
-	Params   Params         `json:"params,omitempty"`
-	Passed   []string       `json:"passed,omitempty"`
-	Trigger  bool           `json:"trigger,omitempty"`
-	Tags     Tags           `json:"tags,omitempty"`
+	Name     string             `json:"get"`
+	Resource string             `json:"resource,omitempty"`
+	Version  *VersionConfig     `json:"version,omitempty"`
+	Params   interpInterpParams `json:"params,omitempty"`
+	Passed   []string           `json:"passed,omitempty"`
+	Trigger  bool               `json:"trigger,omitempty"`
+	Tags     interpInterpTags   `json:"tags,omitempty"`
 }
 
 func (step *GetStep) ResourceName() string {
@@ -315,12 +318,12 @@ func (step *GetStep) Visit(v StepVisitor) error {
 }
 
 type PutStep struct {
-	Name      string        `json:"put"`
-	Resource  string        `json:"resource,omitempty"`
-	Params    Params        `json:"params,omitempty"`
-	Inputs    *InputsConfig `json:"inputs,omitempty"`
-	Tags      Tags          `json:"tags,omitempty"`
-	GetParams Params        `json:"get_params,omitempty"`
+	Name      string              `json:"put"`
+	Resource  string              `json:"resource,omitempty"`
+	Params    interpInterpParams  `json:"params,omitempty"`
+	Inputs    *interpInputsConfig `json:"inputs,omitempty"`
+	Tags      interpInterpTags    `json:"tags,omitempty"`
+	GetParams interpInterpParams  `json:"get_params,omitempty"`
 }
 
 func (step *PutStep) ResourceName() string {
@@ -336,28 +339,34 @@ func (step *PutStep) Visit(v StepVisitor) error {
 }
 
 type TaskStep struct {
-	Name              string            `json:"task"`
-	Privileged        bool              `json:"privileged,omitempty"`
-	ConfigPath        string            `json:"file,omitempty"`
-	Config            *TaskConfig       `json:"config,omitempty"`
-	Params            Params            `json:"params,omitempty"`
-	Vars              Params            `json:"vars,omitempty"`
-	Tags              Tags              `json:"tags,omitempty"`
-	InputMapping      map[string]string `json:"input_mapping,omitempty"`
-	OutputMapping     map[string]string `json:"output_mapping,omitempty"`
-	ImageArtifactName string            `json:"image,omitempty"`
+	Name              string                      `json:"task"`
+	Privileged        interp.Bool                 `json:"privileged,omitempty"`
+	ConfigPath        interp.String               `json:"file,omitempty"`
+	Config            *interpInterpTaskConfig     `json:"config,omitempty"`
+	Params            interpInterpParams          `json:"params,omitempty"`
+	Vars              interpInterpParams          `json:"vars,omitempty"`
+	Tags              interpInterpTags            `json:"tags,omitempty"`
+	InputMapping      interpInterpArtifactMapping `json:"input_mapping,omitempty"`
+	OutputMapping     interpInterpArtifactMapping `json:"output_mapping,omitempty"`
+	ImageArtifactName interp.String               `json:"image,omitempty"`
 }
+
+type ArtifactMapping map[string]string
+
+//interpgen:generate InterpArtifactMapping
+
+type InterpArtifactMapping map[interp.String]interp.String
 
 func (step *TaskStep) Visit(v StepVisitor) error {
 	return v.VisitTask(step)
 }
 
 type SetPipelineStep struct {
-	Name     string   `json:"set_pipeline"`
-	File     string   `json:"file,omitempty"`
-	Team     string   `json:"team,omitempty"`
-	Vars     Params   `json:"vars,omitempty"`
-	VarFiles []string `json:"var_files,omitempty"`
+	Name     interp.String          `json:"set_pipeline"`
+	File     interp.String          `json:"file,omitempty"`
+	Team     interp.String          `json:"team,omitempty"`
+	Vars     interpInterpParams     `json:"vars,omitempty"`
+	VarFiles interpInterpStringList `json:"var_files,omitempty"`
 }
 
 func (step *SetPipelineStep) Visit(v StepVisitor) error {
@@ -365,10 +374,10 @@ func (step *SetPipelineStep) Visit(v StepVisitor) error {
 }
 
 type LoadVarStep struct {
-	Name   string `json:"load_var"`
-	File   string `json:"file,omitempty"`
-	Format string `json:"format,omitempty"`
-	Reveal bool   `json:"reveal,omitempty"`
+	Name   interp.String `json:"load_var"`
+	File   interp.String `json:"file,omitempty"`
+	Format interp.String `json:"format,omitempty"`
+	Reveal interp.Bool   `json:"reveal,omitempty"`
 }
 
 func (step *LoadVarStep) Visit(v StepVisitor) error {
@@ -408,9 +417,9 @@ func (step *InParallelStep) Visit(v StepVisitor) error {
 }
 
 type InParallelConfig struct {
-	Steps    []Step `json:"steps,omitempty"`
-	Limit    int    `json:"limit,omitempty"`
-	FailFast bool   `json:"fail_fast,omitempty"`
+	Steps    []Step      `json:"steps,omitempty"`
+	Limit    interp.Int  `json:"limit,omitempty"`
+	FailFast interp.Bool `json:"fail_fast,omitempty"`
 }
 
 func (c *InParallelConfig) UnmarshalJSON(payload []byte) error {
@@ -443,9 +452,9 @@ func (c *InParallelConfig) UnmarshalJSON(payload []byte) error {
 }
 
 type AcrossVarConfig struct {
-	Var         string             `json:"var"`
-	Values      []interface{}      `json:"values,omitempty"`
-	MaxInFlight *MaxInFlightConfig `json:"max_in_flight,omitempty"`
+	Var         string                   `json:"var"`
+	Values      []interface{}            `json:"values,omitempty"`
+	MaxInFlight *interpMaxInFlightConfig `json:"max_in_flight,omitempty"`
 }
 
 func (config *AcrossVarConfig) UnmarshalJSON(data []byte) error {
@@ -464,7 +473,7 @@ func (config *AcrossVarConfig) UnmarshalJSON(data []byte) error {
 type AcrossStep struct {
 	Step     StepConfig        `json:"-"`
 	Vars     []AcrossVarConfig `json:"across"`
-	FailFast bool              `json:"fail_fast,omitempty"`
+	FailFast interp.Bool       `json:"fail_fast,omitempty"`
 }
 
 func (step *AcrossStep) ParseJSON(data []byte) error {
@@ -503,9 +512,28 @@ func (step *RetryStep) Visit(v StepVisitor) error {
 type TimeoutStep struct {
 	Step StepConfig `json:"-"`
 
-	// it's very tempting to make this a Duration type, but that would probably
-	// prevent using `((vars))` to parameterize it
-	Duration string `json:"timeout"`
+	Duration interpDuration `json:"timeout"`
+}
+
+//interpgen:generate Duration
+
+type Duration time.Duration
+
+func (d *Duration) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	dur, err := time.ParseDuration(s)
+	if err != nil {
+		return err
+	}
+	*d = Duration(dur)
+	return nil
+}
+
+func (d Duration) MarshalJSON() ([]byte, error) {
+	return json.Marshal(time.Duration(d).String())
 }
 
 func (step *TimeoutStep) Wrap(sub StepConfig) {
@@ -605,6 +633,8 @@ func (step *EnsureStep) Visit(v StepVisitor) error {
 	return v.VisitEnsure(step)
 }
 
+//interpgen:generate MaxInFlightConfig
+
 // MaxInFlightConfig can represent either running all values in an AcrossStep
 // in parallel or a applying a limit to the sub-steps that can run at once.
 type MaxInFlightConfig struct {
@@ -701,6 +731,8 @@ func (c *VersionConfig) MarshalJSON() ([]byte, error) {
 
 	return json.Marshal("")
 }
+
+//interpgen:generate InputsConfig
 
 // A InputsConfig represents the choice to include every artifact within the
 // job as an input to the put step or specific ones.

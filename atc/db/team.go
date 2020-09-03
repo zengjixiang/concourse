@@ -45,7 +45,7 @@ type Team interface {
 	OrderPipelines([]string) error
 
 	CreateOneOffBuild() (Build, error)
-	CreateStartedBuild(plan atc.Plan) (Build, error)
+	CreateStartedBuild(plan atc.PlanSkeleton) (Build, error)
 
 	PrivateAndPublicBuilds(Page) ([]Build, Pagination, error)
 	Builds(page Page) ([]Build, Pagination, error)
@@ -668,7 +668,7 @@ func (t *team) CreateOneOffBuild() (Build, error) {
 	return build, nil
 }
 
-func (t *team) CreateStartedBuild(plan atc.Plan) (Build, error) {
+func (t *team) CreateStartedBuild(plan atc.PlanSkeleton) (Build, error) {
 	tx, err := t.conn.Begin()
 	if err != nil {
 		return nil, err

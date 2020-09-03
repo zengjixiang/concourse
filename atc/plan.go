@@ -166,9 +166,10 @@ type AcrossPlan struct {
 }
 
 type AcrossVar struct {
-	Var         string        `json:"name"`
-	Values      []interface{} `json:"values"`
-	MaxInFlight int           `json:"max_in_flight"`
+	Var    string        `json:"name"`
+	Values []interface{} `json:"values"`
+	// TODO: make a MaxInFlightConfig
+	MaxInFlight int `json:"max_in_flight"`
 }
 
 type VarScopedPlan struct {
@@ -205,10 +206,11 @@ type PutPlan struct {
 }
 
 type CheckPlan struct {
-	Type        string  `json:"type"`
-	Name        string  `json:"name,omitempty"`
-	Source      Source  `json:"source"`
-	Tags        Tags    `json:"tags,omitempty"`
+	Type   string `json:"type"`
+	Name   string `json:"name,omitempty"`
+	Source Source `json:"source"`
+	Tags   Tags   `json:"tags,omitempty"`
+	// TODO: Duration?
 	Timeout     string  `json:"timeout,omitempty"`
 	FromVersion Version `json:"from_version,omitempty"`
 
@@ -225,20 +227,20 @@ type TaskPlan struct {
 	Config     *TaskConfig `json:"config,omitempty"`
 	Vars       Params      `json:"vars,omitempty"`
 
-	Params            Params            `json:"params,omitempty"`
-	InputMapping      map[string]string `json:"input_mapping,omitempty"`
-	OutputMapping     map[string]string `json:"output_mapping,omitempty"`
-	ImageArtifactName string            `json:"image,omitempty"`
+	Params            Params          `json:"params,omitempty"`
+	InputMapping      ArtifactMapping `json:"input_mapping,omitempty"`
+	OutputMapping     ArtifactMapping `json:"output_mapping,omitempty"`
+	ImageArtifactName string          `json:"image,omitempty"`
 
 	VersionedResourceTypes VersionedResourceTypes `json:"resource_types,omitempty"`
 }
 
 type SetPipelinePlan struct {
-	Name     string                 `json:"name"`
-	File     string                 `json:"file"`
-	Team     string                 `json:"team,omitempty"`
-	Vars     map[string]interface{} `json:"vars,omitempty"`
-	VarFiles []string               `json:"var_files,omitempty"`
+	Name     string   `json:"name"`
+	File     string   `json:"file"`
+	Team     string   `json:"team,omitempty"`
+	Vars     Params   `json:"vars,omitempty"`
+	VarFiles []string `json:"var_files,omitempty"`
 }
 
 type LoadVarPlan struct {

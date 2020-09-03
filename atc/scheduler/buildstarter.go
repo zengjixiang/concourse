@@ -23,7 +23,7 @@ type BuildStarter interface {
 //go:generate counterfeiter . BuildPlanner
 
 type BuildPlanner interface {
-	Create(atc.StepConfig, db.SchedulerResources, atc.VersionedResourceTypes, []db.BuildInput) (atc.Plan, error)
+	Create(atc.StepConfig, db.SchedulerResources, atc.VersionedResourceTypes, []db.BuildInput) (atc.PlanSkeleton, error)
 }
 
 type Build interface {

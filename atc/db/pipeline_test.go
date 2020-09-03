@@ -1790,15 +1790,15 @@ var _ = Describe("Pipeline", func() {
 
 	Describe("CreateStartedBuild", func() {
 		var (
-			plan         atc.Plan
+			plan         atc.PlanSkeleton
 			startedBuild db.Build
 			err          error
 		)
 
 		BeforeEach(func() {
-			plan = atc.Plan{
+			plan = atc.PlanSkeleton{
 				ID: atc.PlanID("56"),
-				Get: &atc.GetPlan{
+				Get: &atc.GetPlanSkeleton{
 					Type:     "some-type",
 					Name:     "some-name",
 					Resource: "some-resource",
@@ -1813,7 +1813,7 @@ var _ = Describe("Pipeline", func() {
 								Source:     atc.Source{"some": "source"},
 								Type:       "some-type",
 								Privileged: true,
-								Tags:       atc.Tags{"some-tags"},
+								Tags:       atc.InterpTags{"some-tags"}.Wrap(),
 							},
 							Version: atc.Version{"some-resource-type": "version"},
 						},

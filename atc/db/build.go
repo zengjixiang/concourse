@@ -109,7 +109,7 @@ type Build interface {
 	TeamID() int
 	TeamName() string
 	Schema() string
-	PrivatePlan() atc.Plan
+	PrivatePlan() atc.PlanSkeleton
 	PublicPlan() *json.RawMessage
 	HasPlan() bool
 	Status() BuildStatus
@@ -135,7 +135,7 @@ type Build interface {
 	Interceptible() (bool, error)
 	Preparation() (BuildPreparation, bool, error)
 
-	Start(atc.Plan) (bool, error)
+	Start(atc.PlanSkeleton) (bool, error)
 	Finish(BuildStatus) error
 
 	SetInterceptible(bool) error
@@ -194,7 +194,7 @@ type build struct {
 	rerunNumber int
 
 	schema      string
-	privatePlan atc.Plan
+	privatePlan atc.PlanSkeleton
 	publicPlan  *json.RawMessage
 
 	createTime time.Time
@@ -226,17 +226,17 @@ func (r ResourceNotFoundInPipeline) Error() string {
 	return fmt.Sprintf("resource %s not found in pipeline %s", r.Resource, r.Pipeline)
 }
 
-func (b *build) ID() int                      { return b.id }
-func (b *build) Name() string                 { return b.name }
-func (b *build) JobID() int                   { return b.jobID }
-func (b *build) JobName() string              { return b.jobName }
-func (b *build) TeamID() int                  { return b.teamID }
-func (b *build) TeamName() string             { return b.teamName }
-func (b *build) IsManuallyTriggered() bool    { return b.isManuallyTriggered }
-func (b *build) Schema() string               { return b.schema }
-func (b *build) PrivatePlan() atc.Plan        { return b.privatePlan }
-func (b *build) PublicPlan() *json.RawMessage { return b.publicPlan }
-func (b *build) HasPlan() bool                { return string(*b.publicPlan) != "{}" }
+func (b *build) ID() int                       { return b.id }
+func (b *build) Name() string                  { return b.name }
+func (b *build) JobID() int                    { return b.jobID }
+func (b *build) JobName() string               { return b.jobName }
+func (b *build) TeamID() int                   { return b.teamID }
+func (b *build) TeamName() string              { return b.teamName }
+func (b *build) IsManuallyTriggered() bool     { return b.isManuallyTriggered }
+func (b *build) Schema() string                { return b.schema }
+func (b *build) PrivatePlan() atc.PlanSkeleton { return b.privatePlan }
+func (b *build) PublicPlan() *json.RawMessage  { return b.publicPlan }
+func (b *build) HasPlan() bool                 { return string(*b.publicPlan) != "{}" }
 func (b *build) IsNewerThanLastCheckOf(input Resource) bool {
 	return b.createTime.After(input.LastCheckEndTime())
 }
@@ -335,7 +335,7 @@ func (b *build) ResourcesChecked() (bool, error) {
 	return !notChecked, nil
 }
 
-func (b *build) Start(plan atc.Plan) (bool, error) {
+func (b *build) Start(plan atc.PlanSkeleton) (bool, error) {
 	tx, err := b.conn.Begin()
 	if err != nil {
 		return false, err

@@ -8,6 +8,7 @@ import (
 
 	"code.cloudfoundry.org/lager"
 	"code.cloudfoundry.org/lager/lagertest"
+	"github.com/concourse/concourse/vars/interp"
 
 	sq "github.com/Masterminds/squirrel"
 	"github.com/concourse/concourse/atc"
@@ -1007,22 +1008,22 @@ var _ = Describe("Team", func() {
 
 	Describe("CreateStartedBuild", func() {
 		var (
-			plan         atc.Plan
+			plan         atc.PlanSkeleton
 			startedBuild db.Build
 			err          error
 		)
 
 		BeforeEach(func() {
-			plan = atc.Plan{
+			plan = atc.PlanSkeleton{
 				ID: atc.PlanID("56"),
-				Get: &atc.GetPlan{
+				Get: &atc.GetPlanSkeleton{
 					Type:     "some-type",
 					Name:     "some-name",
 					Resource: "some-resource",
 					Source:   atc.Source{"some": "source"},
-					Params:   atc.Params{"some": "params"},
+					Params:   atc.InterpParams{"some": interp.Any{Value: "params"}}.Wrap(),
 					Version:  &atc.Version{"some": "version"},
-					Tags:     atc.Tags{"some-tags"},
+					Tags:     atc.InterpTags{"some-tags"}.Wrap(),
 					VersionedResourceTypes: atc.VersionedResourceTypes{
 						{
 							ResourceType: atc.ResourceType{
@@ -1030,7 +1031,7 @@ var _ = Describe("Team", func() {
 								Source:     atc.Source{"some": "source"},
 								Type:       "some-type",
 								Privileged: true,
-								Tags:       atc.Tags{"some-tags"},
+								Tags:       atc.InterpTags{"some-tags"}.Wrap(),
 							},
 							Version: atc.Version{"some-resource-type": "version"},
 						},
@@ -1562,9 +1563,9 @@ var _ = Describe("Team", func() {
 								Config: &atc.GetStep{
 									Name:     "some-input",
 									Resource: "some-resource",
-									Params: atc.Params{
-										"some-param": "some-value",
-									},
+									Params: atc.InterpParams{
+										"some-param": interp.Any{Value: "some-value"},
+									}.Wrap(),
 									Passed:  []string{"job-1", "job-2"},
 									Trigger: true,
 								},
@@ -1572,19 +1573,19 @@ var _ = Describe("Team", func() {
 							{
 								Config: &atc.TaskStep{
 									Name:       "some-task",
-									Privileged: true,
+									Privileged: interp.StaticBool(true),
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
+									Config: atc.InterpTaskConfig{
 										RootfsURI: "some-image",
-									},
+									}.WrapPtr(),
 								},
 							},
 							{
 								Config: &atc.PutStep{
 									Name: "some-resource",
-									Params: atc.Params{
-										"some-param": "some-value",
-									},
+									Params: atc.InterpParams{
+										"some-param": interp.Any{Value: "some-value"},
+									}.Wrap(),
 								},
 							},
 						},
@@ -1895,19 +1896,19 @@ var _ = Describe("Team", func() {
 						{
 							Config: &atc.TaskStep{
 								Name:       "some-task",
-								Privileged: true,
+								Privileged: interp.StaticBool(true),
 								ConfigPath: "some/config/path.yml",
-								Config: &atc.TaskConfig{
+								Config: atc.InterpTaskConfig{
 									RootfsURI: "some-image",
-								},
+								}.WrapPtr(),
 							},
 						},
 						{
 							Config: &atc.PutStep{
 								Name: "some-resource",
-								Params: atc.Params{
-									"some-param": "some-value",
-								},
+								Params: atc.InterpParams{
+									"some-param": interp.Any{Value: "some-value"},
+								}.Wrap(),
 							},
 						},
 					},
@@ -2035,9 +2036,9 @@ var _ = Describe("Team", func() {
 							Config: &atc.GetStep{
 								Name:     "some-input",
 								Resource: "some-resource",
-								Params: atc.Params{
-									"some-param": "some-value",
-								},
+								Params: atc.InterpParams{
+									"some-param": interp.Any{Value: "some-value"},
+								}.Wrap(),
 								Passed:  []string{"job-1", "job-2"},
 								Trigger: true,
 							},
@@ -2051,9 +2052,9 @@ var _ = Describe("Team", func() {
 						{
 							Config: &atc.PutStep{
 								Name: "some-resource",
-								Params: atc.Params{
-									"some-param": "some-value",
-								},
+								Params: atc.InterpParams{
+									"some-param": interp.Any{Value: "some-value"},
+								}.Wrap(),
 							},
 						},
 						{
@@ -2173,9 +2174,9 @@ var _ = Describe("Team", func() {
 						Config: &atc.GetStep{
 							Name:     "some-input",
 							Resource: "renamed-resource",
-							Params: atc.Params{
-								"some-param": "some-value",
-							},
+							Params: atc.InterpParams{
+								"some-param": interp.Any{Value: "some-value"},
+							}.Wrap(),
 							Passed:  []string{"job-1", "job-2"},
 							Trigger: true,
 						},
@@ -2207,9 +2208,9 @@ var _ = Describe("Team", func() {
 						Config: &atc.GetStep{
 							Name:     "some-input",
 							Resource: "new-resource",
-							Params: atc.Params{
-								"some-param": "some-value",
-							},
+							Params: atc.InterpParams{
+								"some-param": interp.Any{Value: "some-value"},
+							}.Wrap(),
 							Passed:  []string{"job-1", "job-2"},
 							Trigger: true,
 						},
@@ -2314,9 +2315,9 @@ var _ = Describe("Team", func() {
 							Config: &atc.GetStep{
 								Name:     "some-input",
 								Resource: "disabled-resource",
-								Params: atc.Params{
-									"some-param": "some-value",
-								},
+								Params: atc.InterpParams{
+									"some-param": interp.Any{Value: "some-value"},
+								}.Wrap(),
 								Passed:  []string{"job-1", "job-2"},
 								Trigger: true,
 							},
@@ -2390,9 +2391,9 @@ var _ = Describe("Team", func() {
 							Config: &atc.GetStep{
 								Name:     "some-input",
 								Resource: "pinned-resource",
-								Params: atc.Params{
-									"some-param": "some-value",
-								},
+								Params: atc.InterpParams{
+									"some-param": interp.Any{Value: "some-value"},
+								}.Wrap(),
 								Passed:  []string{"job-1", "job-2"},
 								Trigger: true,
 							},
@@ -2706,9 +2707,9 @@ var _ = Describe("Team", func() {
 								Config: &atc.GetStep{
 									Name:     "some-input",
 									Resource: "some-resource",
-									Params: atc.Params{
-										"some-param": "some-value",
-									},
+									Params: atc.InterpParams{
+										"some-param": interp.Any{Value: "some-value"},
+									}.Wrap(),
 									Passed:  []string{"job-1", "job-2"},
 									Trigger: true,
 								},
@@ -2716,19 +2717,19 @@ var _ = Describe("Team", func() {
 							{
 								Config: &atc.TaskStep{
 									Name:       "some-task",
-									Privileged: true,
+									Privileged: interp.StaticBool(true),
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
+									Config: atc.InterpTaskConfig{
 										RootfsURI: "some-image",
-									},
+									}.WrapPtr(),
 								},
 							},
 							{
 								Config: &atc.PutStep{
 									Name: "some-resource",
-									Params: atc.Params{
-										"some-param": "some-value",
-									},
+									Params: atc.InterpParams{
+										"some-param": interp.Any{Value: "some-value"},
+									}.Wrap(),
 								},
 							},
 						},
@@ -2862,9 +2863,9 @@ var _ = Describe("Team", func() {
 								Config: &atc.GetStep{
 									Name:     "some-input",
 									Resource: "some-resource",
-									Params: atc.Params{
-										"some-param": "some-value",
-									},
+									Params: atc.InterpParams{
+										"some-param": interp.Any{Value: "some-value"},
+									}.Wrap(),
 									Passed:  []string{"job-2"},
 									Trigger: true,
 								},
@@ -2872,19 +2873,19 @@ var _ = Describe("Team", func() {
 							{
 								Config: &atc.TaskStep{
 									Name:       "some-task",
-									Privileged: true,
+									Privileged: interp.StaticBool(true),
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
+									Config: atc.InterpTaskConfig{
 										RootfsURI: "some-image",
-									},
+									}.WrapPtr(),
 								},
 							},
 							{
 								Config: &atc.PutStep{
 									Name: "some-resource",
-									Params: atc.Params{
-										"some-param": "some-value",
-									},
+									Params: atc.InterpParams{
+										"some-param": interp.Any{Value: "some-value"},
+									}.Wrap(),
 								},
 							},
 						},
@@ -3105,9 +3106,9 @@ var _ = Describe("Team", func() {
 						Config: &atc.GetStep{
 							Name:     "new-input",
 							Resource: "new-resource",
-							Params: atc.Params{
-								"new-param": "new-value",
-							},
+							Params: atc.InterpParams{
+								"new-param": interp.Any{Value: "new-value"},
+							}.Wrap(),
 						},
 					},
 					{
