@@ -88,7 +88,7 @@ func (config JobConfig) MaxInFlight() int {
 	return 0
 }
 
-func (config JobConfig) Inputs() []JobInputParams {
+func (config JobConfig) Inputs() []InterpJobInputParams {
 	var inputs []JobInputParams
 
 	_ = config.StepConfig().Visit(StepRecursor{

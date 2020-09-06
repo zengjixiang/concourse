@@ -47,16 +47,16 @@ type ImageResource struct {
 	Version Version `json:"version,omitempty" interpolate:"root,keys=root,values=root"`
 }
 
-func NewTaskConfig(configBytes []byte) (TaskConfig, error) {
-	var config TaskConfig
+func NewTaskConfig(configBytes []byte) (InterpTaskConfig, error) {
+	var config InterpTaskConfig
 	err := yaml.UnmarshalStrict(configBytes, &config, yaml.DisallowUnknownFields)
 	if err != nil {
-		return TaskConfig{}, err
+		return InterpTaskConfig{}, err
 	}
 
 	err = config.Validate()
 	if err != nil {
-		return TaskConfig{}, err
+		return InterpTaskConfig{}, err
 	}
 
 	return config, nil
@@ -70,14 +70,19 @@ func (err TaskValidationError) Error() string {
 	return fmt.Sprintf("invalid task configuration:\n%s", strings.Join(err.Errors, "\n"))
 }
 
-func (config TaskConfig) Validate() error {
+func (config InterpTaskConfig) Validate() error {
+	if config.Ref != "" {
+		// Can't validate if the entire config is interpolated
+		return nil
+	}
+
 	var errors []string
 
-	if config.Platform == "" {
+	if config.Val.Platform == "" {
 		errors = append(errors, "missing 'platform'")
 	}
 
-	if config.Run.Path == "" {
+	if config.Val.Run.Val.Path == "" {
 		errors = append(errors, "missing path to executable to run")
 	}
 
@@ -93,11 +98,18 @@ func (config TaskConfig) Validate() error {
 	return nil
 }
 
-func (config TaskConfig) validateOutputContainsNames() []string {
+func (config InterpTaskConfig) validateOutputContainsNames() []string {
+	if config.Val.Outputs.Ref != "" {
+		return nil
+	}
+
 	var messages []string
 
-	for i, output := range config.Outputs {
-		if output.Name == "" {
+	for i, output := range config.Val.Outputs.Val {
+		if output.Ref != "" {
+			continue
+		}
+		if output.Val.Name == "" {
 			messages = append(messages, fmt.Sprintf("  output in position %d is missing a name", i))
 		}
 	}
@@ -105,11 +117,18 @@ func (config TaskConfig) validateOutputContainsNames() []string {
 	return messages
 }
 
-func (config TaskConfig) validateInputContainsNames() []string {
+func (config InterpTaskConfig) validateInputContainsNames() []string {
+	if config.Val.Inputs.Ref != "" {
+		return nil
+	}
+
 	messages := []string{}
 
-	for i, input := range config.Inputs {
-		if input.Name == "" {
+	for i, input := range config.Val.Inputs.Val {
+		if input.Ref != "" {
+			continue
+		}
+		if input.Val.Name == "" {
 			messages = append(messages, fmt.Sprintf("  input in position %d is missing a name", i))
 		}
 	}

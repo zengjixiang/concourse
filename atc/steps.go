@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+	"time"
+
+	"github.com/aoldershaw/interpolate"
 )
 
 // Step is an "envelope" type, acting as a wrapper to handle the marshaling and
@@ -296,10 +299,10 @@ type GetStep struct {
 	Name     string         `json:"get"`
 	Resource string         `json:"resource,omitempty"`
 	Version  *VersionConfig `json:"version,omitempty"`
-	Params   Params         `json:"params,omitempty"`
+	Params   interpParams   `json:"params,omitempty"`
 	Passed   []string       `json:"passed,omitempty"`
 	Trigger  bool           `json:"trigger,omitempty"`
-	Tags     Tags           `json:"tags,omitempty"`
+	Tags     interpTags     `json:"tags,omitempty"`
 }
 
 func (step *GetStep) ResourceName() string {
@@ -315,12 +318,12 @@ func (step *GetStep) Visit(v StepVisitor) error {
 }
 
 type PutStep struct {
-	Name      string        `json:"put"`
-	Resource  string        `json:"resource,omitempty"`
-	Params    Params        `json:"params,omitempty"`
-	Inputs    *InputsConfig `json:"inputs,omitempty"`
-	Tags      Tags          `json:"tags,omitempty"`
-	GetParams Params        `json:"get_params,omitempty"`
+	Name      string              `json:"put"`
+	Resource  string              `json:"resource,omitempty"`
+	Params    interpParams        `json:"params,omitempty"`
+	Inputs    *interpInputsConfig `json:"inputs,omitempty"`
+	Tags      interpTags          `json:"tags,omitempty"`
+	GetParams interpParams        `json:"get_params,omitempty"`
 }
 
 func (step *PutStep) ResourceName() string {
@@ -336,16 +339,16 @@ func (step *PutStep) Visit(v StepVisitor) error {
 }
 
 type TaskStep struct {
-	Name              string            `json:"task"`
-	Privileged        bool              `json:"privileged,omitempty"`
-	ConfigPath        string            `json:"file,omitempty"`
-	Config            *TaskConfig       `json:"config,omitempty"`
-	Params            Params            `json:"params,omitempty"`
-	Vars              Params            `json:"vars,omitempty"`
-	Tags              Tags              `json:"tags,omitempty"`
-	InputMapping      map[string]string `json:"input_mapping,omitempty"`
-	OutputMapping     map[string]string `json:"output_mapping,omitempty"`
-	ImageArtifactName string            `json:"image,omitempty"`
+	Name              interpolate.String `json:"task"`
+	Privileged        interpBool         `json:"privileged,omitempty"`
+	ConfigPath        interpolate.String `json:"file,omitempty"`
+	Config            *InterpTaskConfig  `json:"config,omitempty"`
+	Params            interpParams       `json:"params,omitempty"`
+	Vars              interpParams       `json:"vars,omitempty"`
+	Tags              interpTags         `json:"tags,omitempty"`
+	InputMapping      interpMap_400C0725 `json:"input_mapping,omitempty"`  // map[string]string
+	OutputMapping     interpMap_400C0725 `json:"output_mapping,omitempty"` // map[string]string
+	ImageArtifactName interpolate.String `json:"image,omitempty"`
 }
 
 func (step *TaskStep) Visit(v StepVisitor) error {
@@ -353,11 +356,11 @@ func (step *TaskStep) Visit(v StepVisitor) error {
 }
 
 type SetPipelineStep struct {
-	Name     string   `json:"set_pipeline"`
-	File     string   `json:"file,omitempty"`
-	Team     string   `json:"team,omitempty"`
-	Vars     Params   `json:"vars,omitempty"`
-	VarFiles []string `json:"var_files,omitempty"`
+	Name     interpolate.String  `json:"set_pipeline"`
+	File     interpolate.String  `json:"file,omitempty"`
+	Team     interpolate.String  `json:"team,omitempty"`
+	Vars     interpParams        `json:"vars,omitempty"`
+	VarFiles interpSlice_EA70350 `json:"var_files,omitempty"` // []string
 }
 
 func (step *SetPipelineStep) Visit(v StepVisitor) error {
@@ -365,10 +368,10 @@ func (step *SetPipelineStep) Visit(v StepVisitor) error {
 }
 
 type LoadVarStep struct {
-	Name   string `json:"load_var"`
-	File   string `json:"file,omitempty"`
-	Format string `json:"format,omitempty"`
-	Reveal bool   `json:"reveal,omitempty"`
+	Name   interpolate.String `json:"load_var"`
+	File   interpolate.String `json:"file,omitempty"`
+	Format interpolate.String `json:"format,omitempty"`
+	Reveal interpBool         `json:"reveal,omitempty"`
 }
 
 func (step *LoadVarStep) Visit(v StepVisitor) error {
@@ -408,9 +411,9 @@ func (step *InParallelStep) Visit(v StepVisitor) error {
 }
 
 type InParallelConfig struct {
-	Steps    []Step `json:"steps,omitempty"`
-	Limit    int    `json:"limit,omitempty"`
-	FailFast bool   `json:"fail_fast,omitempty"`
+	Steps    []Step     `json:"steps,omitempty"`
+	Limit    interpInt  `json:"limit,omitempty"`
+	FailFast interpBool `json:"fail_fast,omitempty"`
 }
 
 func (c *InParallelConfig) UnmarshalJSON(payload []byte) error {
@@ -443,8 +446,9 @@ func (c *InParallelConfig) UnmarshalJSON(payload []byte) error {
 }
 
 type AcrossVarConfig struct {
-	Var         string             `json:"var"`
-	Values      []interface{}      `json:"values,omitempty"`
+	Var    string        `json:"var"`
+	Values []interface{} `json:"values,omitempty"`
+	// TODO: generate/use Interp type
 	MaxInFlight *MaxInFlightConfig `json:"max_in_flight,omitempty"`
 }
 
@@ -464,7 +468,7 @@ func (config *AcrossVarConfig) UnmarshalJSON(data []byte) error {
 type AcrossStep struct {
 	Step     StepConfig        `json:"-"`
 	Vars     []AcrossVarConfig `json:"across"`
-	FailFast bool              `json:"fail_fast,omitempty"`
+	FailFast interpBool        `json:"fail_fast,omitempty"`
 }
 
 func (step *AcrossStep) ParseJSON(data []byte) error {
@@ -501,11 +505,25 @@ func (step *RetryStep) Visit(v StepVisitor) error {
 }
 
 type TimeoutStep struct {
-	Step StepConfig `json:"-"`
+	Step     StepConfig     `json:"-"`
+	Duration InterpDuration `json:"timeout"`
+}
 
-	// it's very tempting to make this a Duration type, but that would probably
-	// prevent using `((vars))` to parameterize it
-	Duration string `json:"timeout"`
+//interpolate:generate Duration
+
+type Duration time.Duration
+
+func (d *Duration) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+	dur, err := time.ParseDuration(s)
+	if err != nil {
+		return err
+	}
+	*d = Duration(dur)
+	return nil
 }
 
 func (step *TimeoutStep) Wrap(sub StepConfig) {
@@ -604,6 +622,8 @@ func (step *EnsureStep) Unwrap() StepConfig {
 func (step *EnsureStep) Visit(v StepVisitor) error {
 	return v.VisitEnsure(step)
 }
+
+//interpolate:generate MaxInFlightConfig
 
 // MaxInFlightConfig can represent either running all values in an AcrossStep
 // in parallel or a applying a limit to the sub-steps that can run at once.

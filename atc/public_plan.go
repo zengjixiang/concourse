@@ -1,8 +1,12 @@
 package atc
 
-import "encoding/json"
+import (
+	"encoding/json"
 
-func (plan Plan) Public() *json.RawMessage {
+	"github.com/aoldershaw/interpolate"
+)
+
+func (plan InterpPlan) Public() *json.RawMessage {
 	var public struct {
 		ID PlanID `json:"id"`
 
@@ -118,7 +122,7 @@ func (plan Plan) Public() *json.RawMessage {
 	return enc(public)
 }
 
-func (plan AggregatePlan) Public() *json.RawMessage {
+func (plan InterpAggregatePlan) Public() *json.RawMessage {
 	public := make([]*json.RawMessage, len(plan))
 
 	for i := 0; i < len(plan); i++ {
@@ -128,7 +132,7 @@ func (plan AggregatePlan) Public() *json.RawMessage {
 	return enc(public)
 }
 
-func (plan InParallelPlan) Public() *json.RawMessage {
+func (plan InterpInParallelPlan) Public() *json.RawMessage {
 	steps := make([]*json.RawMessage, len(plan.Steps))
 
 	for i := 0; i < len(plan.Steps); i++ {
@@ -137,8 +141,8 @@ func (plan InParallelPlan) Public() *json.RawMessage {
 
 	return enc(struct {
 		Steps    []*json.RawMessage `json:"steps"`
-		Limit    int                `json:"limit,omitempty"`
-		FailFast bool               `json:"fail_fast,omitempty"`
+		Limit    interpInt          `json:"limit,omitempty"`
+		FailFast interpBool         `json:"fail_fast,omitempty"`
 	}{
 		Steps:    steps,
 		Limit:    plan.Limit,
@@ -146,7 +150,7 @@ func (plan InParallelPlan) Public() *json.RawMessage {
 	})
 }
 
-func (plan AcrossPlan) Public() *json.RawMessage {
+func (plan InterpAcrossPlan) Public() *json.RawMessage {
 	type scopedStep struct {
 		Step   *json.RawMessage `json:"step"`
 		Values []interface{}    `json:"values"`
@@ -161,17 +165,17 @@ func (plan AcrossPlan) Public() *json.RawMessage {
 	}
 
 	return enc(struct {
-		Vars        []AcrossVar  `json:"vars"`
-		Steps       []scopedStep `json:"steps"`
-		FailFast    bool         `json:"fail_fast,omitempty"`
+		Vars     []interpAcrossVar `json:"vars"`
+		Steps    []scopedStep      `json:"steps"`
+		FailFast interpBool        `json:"fail_fast,omitempty"`
 	}{
-		Vars:        plan.Vars,
-		Steps:       steps,
-		FailFast:    plan.FailFast,
+		Vars:     plan.Vars,
+		Steps:    steps,
+		FailFast: plan.FailFast,
 	})
 }
 
-func (plan DoPlan) Public() *json.RawMessage {
+func (plan InterpDoPlan) Public() *json.RawMessage {
 	public := make([]*json.RawMessage, len(plan))
 
 	for i := 0; i < len(plan); i++ {
@@ -181,7 +185,7 @@ func (plan DoPlan) Public() *json.RawMessage {
 	return enc(public)
 }
 
-func (plan EnsurePlan) Public() *json.RawMessage {
+func (plan InterpEnsurePlan) Public() *json.RawMessage {
 	return enc(struct {
 		Step *json.RawMessage `json:"step"`
 		Next *json.RawMessage `json:"ensure"`
@@ -191,7 +195,7 @@ func (plan EnsurePlan) Public() *json.RawMessage {
 	})
 }
 
-func (plan GetPlan) Public() *json.RawMessage {
+func (plan InterpGetPlan) Public() *json.RawMessage {
 	return enc(struct {
 		Type     string   `json:"type"`
 		Name     string   `json:"name,omitempty"`
@@ -217,7 +221,7 @@ func (plan DependentGetPlan) Public() *json.RawMessage {
 	})
 }
 
-func (plan OnAbortPlan) Public() *json.RawMessage {
+func (plan InterpOnAbortPlan) Public() *json.RawMessage {
 	return enc(struct {
 		Step *json.RawMessage `json:"step"`
 		Next *json.RawMessage `json:"on_abort"`
@@ -227,7 +231,7 @@ func (plan OnAbortPlan) Public() *json.RawMessage {
 	})
 }
 
-func (plan OnErrorPlan) Public() *json.RawMessage {
+func (plan InterpOnErrorPlan) Public() *json.RawMessage {
 	return enc(struct {
 		Step *json.RawMessage `json:"step"`
 		Next *json.RawMessage `json:"on_error"`
@@ -237,7 +241,7 @@ func (plan OnErrorPlan) Public() *json.RawMessage {
 	})
 }
 
-func (plan OnFailurePlan) Public() *json.RawMessage {
+func (plan InterpOnFailurePlan) Public() *json.RawMessage {
 	return enc(struct {
 		Step *json.RawMessage `json:"step"`
 		Next *json.RawMessage `json:"on_failure"`
@@ -247,7 +251,7 @@ func (plan OnFailurePlan) Public() *json.RawMessage {
 	})
 }
 
-func (plan OnSuccessPlan) Public() *json.RawMessage {
+func (plan InterpOnSuccessPlan) Public() *json.RawMessage {
 	return enc(struct {
 		Step *json.RawMessage `json:"step"`
 		Next *json.RawMessage `json:"on_success"`
@@ -257,7 +261,7 @@ func (plan OnSuccessPlan) Public() *json.RawMessage {
 	})
 }
 
-func (plan PutPlan) Public() *json.RawMessage {
+func (plan InterpPutPlan) Public() *json.RawMessage {
 	return enc(struct {
 		Type     string `json:"type"`
 		Name     string `json:"name,omitempty"`
@@ -269,7 +273,7 @@ func (plan PutPlan) Public() *json.RawMessage {
 	})
 }
 
-func (plan CheckPlan) Public() *json.RawMessage {
+func (plan InterpCheckPlan) Public() *json.RawMessage {
 	return enc(struct {
 		Type string `json:"type"`
 		Name string `json:"name,omitempty"`
@@ -279,45 +283,45 @@ func (plan CheckPlan) Public() *json.RawMessage {
 	})
 }
 
-func (plan TaskPlan) Public() *json.RawMessage {
+func (plan InterpTaskPlan) Public() *json.RawMessage {
 	return enc(struct {
-		Name       string `json:"name"`
-		Privileged bool   `json:"privileged"`
+		Name       interpolate.String `json:"name"`
+		Privileged interpBool         `json:"privileged"`
 	}{
 		Name:       plan.Name,
 		Privileged: plan.Privileged,
 	})
 }
 
-func (plan SetPipelinePlan) Public() *json.RawMessage {
+func (plan InterpSetPipelinePlan) Public() *json.RawMessage {
 	return enc(struct {
-		Name string `json:"name"`
-		Team string `json:"team"`
+		Name interpolate.String `json:"name"`
+		Team interpolate.String `json:"team"`
 	}{
 		Name: plan.Name,
 		Team: plan.Team,
 	})
 }
 
-func (plan LoadVarPlan) Public() *json.RawMessage {
+func (plan InterpLoadVarPlan) Public() *json.RawMessage {
 	return enc(struct {
-		Name string `json:"name"`
+		Name interpolate.String `json:"name"`
 	}{
 		Name: plan.Name,
 	})
 }
 
-func (plan TimeoutPlan) Public() *json.RawMessage {
+func (plan InterpTimeoutPlan) Public() *json.RawMessage {
 	return enc(struct {
-		Step     *json.RawMessage `json:"step"`
-		Duration string           `json:"duration"`
+		Step     *json.RawMessage   `json:"step"`
+		Duration interpolate.String `json:"duration"`
 	}{
 		Step:     plan.Step.Public(),
 		Duration: plan.Duration,
 	})
 }
 
-func (plan TryPlan) Public() *json.RawMessage {
+func (plan InterpTryPlan) Public() *json.RawMessage {
 	return enc(struct {
 		Step *json.RawMessage `json:"step"`
 	}{
@@ -325,7 +329,7 @@ func (plan TryPlan) Public() *json.RawMessage {
 	})
 }
 
-func (plan RetryPlan) Public() *json.RawMessage {
+func (plan InterpRetryPlan) Public() *json.RawMessage {
 	public := make([]*json.RawMessage, len(plan))
 
 	for i := 0; i < len(plan); i++ {

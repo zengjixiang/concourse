@@ -20,46 +20,46 @@ type PlanConfig interface {
 	Public() *json.RawMessage
 }
 
-func (factory PlanFactory) NewPlan(step PlanConfig) Plan {
+func (factory PlanFactory) NewPlan(step PlanConfig) InterpPlan {
 	num := atomic.AddInt64(factory.currentNum, 1)
 
-	var plan Plan
+	var plan InterpPlan
 	switch t := step.(type) {
-	case AggregatePlan:
+	case InterpAggregatePlan:
 		plan.Aggregate = &t
-	case InParallelPlan:
+	case InterpInParallelPlan:
 		plan.InParallel = &t
-	case AcrossPlan:
+	case InterpAcrossPlan:
 		plan.Across = &t
-	case DoPlan:
+	case InterpDoPlan:
 		plan.Do = &t
-	case GetPlan:
+	case InterpGetPlan:
 		plan.Get = &t
-	case PutPlan:
+	case InterpPutPlan:
 		plan.Put = &t
-	case TaskPlan:
+	case InterpTaskPlan:
 		plan.Task = &t
-	case SetPipelinePlan:
+	case InterpSetPipelinePlan:
 		plan.SetPipeline = &t
-	case LoadVarPlan:
+	case InterpLoadVarPlan:
 		plan.LoadVar = &t
-	case CheckPlan:
+	case InterpCheckPlan:
 		plan.Check = &t
-	case OnAbortPlan:
+	case InterpOnAbortPlan:
 		plan.OnAbort = &t
-	case OnErrorPlan:
+	case InterpOnErrorPlan:
 		plan.OnError = &t
-	case EnsurePlan:
+	case InterpEnsurePlan:
 		plan.Ensure = &t
-	case OnSuccessPlan:
+	case InterpOnSuccessPlan:
 		plan.OnSuccess = &t
-	case OnFailurePlan:
+	case InterpOnFailurePlan:
 		plan.OnFailure = &t
-	case TryPlan:
+	case InterpTryPlan:
 		plan.Try = &t
-	case TimeoutPlan:
+	case InterpTimeoutPlan:
 		plan.Timeout = &t
-	case RetryPlan:
+	case InterpRetryPlan:
 		plan.Retry = &t
 	case ArtifactInputPlan:
 		plan.ArtifactInput = &t

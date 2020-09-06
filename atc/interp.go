@@ -438,7 +438,7 @@ type InterpTaskPlan struct {
 	Privileged             interpBool             `json:"privileged"`
 	Tags                   interpTags             `json:"tags,omitempty"`
 	ConfigPath             interpolate.String     `json:"config_path,omitempty"`
-	Config                 *interpTaskConfig      `json:"config,omitempty"`
+	Config                 *InterpTaskConfig      `json:"config,omitempty"`
 	Vars                   interpParams           `json:"vars,omitempty"`
 	Params                 interpParams           `json:"params,omitempty"`
 	InputMapping           interpMap_400C0725     `json:"input_mapping,omitempty"`
@@ -538,7 +538,7 @@ func (i interpBool) Interpolate(resolver interpolate.Resolver) (bool, error) {
 	return i.Val, nil
 }
 
-type interpTaskConfig struct {
+type InterpTaskConfig struct {
 	Val struct {
 		Platform      interpolate.String     `json:"platform,omitempty"`
 		RootfsURI     interpolate.String     `json:"rootfs_uri,omitempty"`
@@ -553,21 +553,21 @@ type interpTaskConfig struct {
 	Ref interpolate.Var
 }
 
-func (i *interpTaskConfig) UnmarshalJSON(data []byte) error {
+func (i *InterpTaskConfig) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &i.Ref); err == nil {
 		return nil
 	}
 	return json.Unmarshal(data, &i.Val)
 }
 
-func (i interpTaskConfig) MarshalJSON() ([]byte, error) {
+func (i InterpTaskConfig) MarshalJSON() ([]byte, error) {
 	if i.Ref != "" {
 		return json.Marshal(i.Ref)
 	}
 	return json.Marshal(i.Val)
 }
 
-func (i interpTaskConfig) Interpolate(resolver interpolate.Resolver) (TaskConfig, error) {
+func (i InterpTaskConfig) Interpolate(resolver interpolate.Resolver) (TaskConfig, error) {
 	if i.Ref != "" {
 		var dst TaskConfig
 		err := i.Ref.InterpolateInto(resolver, &dst)
@@ -1827,4 +1827,32 @@ func (i InterpRetryPlan) Interpolate(resolver interpolate.Resolver) (RetryPlan, 
 		target[i] = vi
 	}
 	return target, nil
+}
+
+type InterpDuration struct {
+	Val Duration
+	Ref interpolate.Var
+}
+
+func (i *InterpDuration) UnmarshalJSON(data []byte) error {
+	if err := json.Unmarshal(data, &i.Ref); err == nil {
+		return nil
+	}
+	return json.Unmarshal(data, &i.Val)
+}
+
+func (i InterpDuration) MarshalJSON() ([]byte, error) {
+	if i.Ref != "" {
+		return json.Marshal(i.Ref)
+	}
+	return json.Marshal(i.Val)
+}
+
+func (i InterpDuration) Interpolate(resolver interpolate.Resolver) (Duration, error) {
+	if i.Ref != "" {
+		var dst Duration
+		err := i.Ref.InterpolateInto(resolver, &dst)
+		return dst, err
+	}
+	return i.Val, nil
 }

@@ -20,7 +20,7 @@ func (planner Planner) Create(
 	resources db.SchedulerResources,
 	resourceTypes atc.VersionedResourceTypes,
 	inputs []db.BuildInput,
-) (atc.Plan, error) {
+) (atc.InterpPlan, error) {
 	visitor := &planVisitor{
 		planFactory: planner.planFactory,
 
@@ -31,7 +31,7 @@ func (planner Planner) Create(
 
 	err := planConfig.Visit(visitor)
 	if err != nil {
-		return atc.Plan{}, err
+		return atc.InterpPlan{}, err
 	}
 
 	return visitor.plan, nil
@@ -44,11 +44,11 @@ type planVisitor struct {
 	resourceTypes atc.VersionedResourceTypes
 	inputs        []db.BuildInput
 
-	plan atc.Plan
+	plan atc.InterpPlan
 }
 
 func (visitor *planVisitor) VisitTask(step *atc.TaskStep) error {
-	visitor.plan = visitor.planFactory.NewPlan(atc.TaskPlan{
+	visitor.plan = visitor.planFactory.NewPlan(atc.InterpTaskPlan{
 		Name:              step.Name,
 		Privileged:        step.Privileged,
 		Config:            step.Config,
@@ -89,7 +89,7 @@ func (visitor *planVisitor) VisitGet(step *atc.GetStep) error {
 		return VersionNotProvidedError{step.Name}
 	}
 
-	visitor.plan = visitor.planFactory.NewPlan(atc.GetPlan{
+	visitor.plan = visitor.planFactory.NewPlan(atc.InterpGetPlan{
 		Name: step.Name,
 
 		Type:     resource.Type,
@@ -118,7 +118,7 @@ func (visitor *planVisitor) VisitPut(step *atc.PutStep) error {
 		return UnknownResourceError{resourceName}
 	}
 
-	atcPutPlan := atc.PutPlan{
+	atcPutPlan := atc.InterpPutPlan{
 		Type:     resource.Type,
 		Name:     logicalName,
 		Resource: resourceName,
@@ -132,7 +132,7 @@ func (visitor *planVisitor) VisitPut(step *atc.PutStep) error {
 
 	putPlan := visitor.planFactory.NewPlan(atcPutPlan)
 
-	dependentGetPlan := visitor.planFactory.NewPlan(atc.GetPlan{
+	dependentGetPlan := visitor.planFactory.NewPlan(atc.InterpGetPlan{
 		Type:        resource.Type,
 		Name:        logicalName,
 		Resource:    resourceName,
@@ -145,7 +145,7 @@ func (visitor *planVisitor) VisitPut(step *atc.PutStep) error {
 		VersionedResourceTypes: visitor.resourceTypes,
 	})
 
-	visitor.plan = visitor.planFactory.NewPlan(atc.OnSuccessPlan{
+	visitor.plan = visitor.planFactory.NewPlan(atc.InterpOnSuccessPlan{
 		Step: putPlan,
 		Next: dependentGetPlan,
 	})
@@ -154,7 +154,7 @@ func (visitor *planVisitor) VisitPut(step *atc.PutStep) error {
 }
 
 func (visitor *planVisitor) VisitDo(step *atc.DoStep) error {
-	do := atc.DoPlan{}
+	do := atc.InterpDoPlan{}
 
 	for _, step := range step.Steps {
 		err := step.Config.Visit(visitor)
@@ -171,7 +171,7 @@ func (visitor *planVisitor) VisitDo(step *atc.DoStep) error {
 }
 
 func (visitor *planVisitor) VisitAggregate(step *atc.AggregateStep) error {
-	do := atc.AggregatePlan{}
+	do := atc.InterpAggregatePlan{}
 
 	for _, sub := range step.Steps {
 		err := sub.Config.Visit(visitor)
@@ -188,7 +188,7 @@ func (visitor *planVisitor) VisitAggregate(step *atc.AggregateStep) error {
 }
 
 func (visitor *planVisitor) VisitInParallel(step *atc.InParallelStep) error {
-	var steps []atc.Plan
+	var steps []atc.InterpPlan
 
 	for _, sub := range step.Config.Steps {
 		err := sub.Config.Visit(visitor)
@@ -199,7 +199,7 @@ func (visitor *planVisitor) VisitInParallel(step *atc.InParallelStep) error {
 		steps = append(steps, visitor.plan)
 	}
 
-	visitor.plan = visitor.planFactory.NewPlan(atc.InParallelPlan{
+	visitor.plan = visitor.planFactory.NewPlan(atc.InterpInParallelPlan{
 		Steps:    steps,
 		Limit:    step.Config.Limit,
 		FailFast: step.Config.FailFast,
@@ -218,25 +218,25 @@ func (visitor *planVisitor) VisitAcross(step *atc.AcrossStep) error {
 				maxInFlight = len(v.Values)
 			}
 		}
-		vars[i] = atc.AcrossVar{
+		vars[i] = atc.interpAcrossVar{
 			Var:         v.Var,
 			Values:      v.Values,
 			MaxInFlight: maxInFlight,
 		}
 	}
 
-	acrossPlan := atc.AcrossPlan{
-		Vars:        vars,
-		Steps:       []atc.VarScopedPlan{},
-		FailFast:    step.FailFast,
+	acrossPlan := atc.InterpAcrossPlan{
+		Vars:     vars,
+		Steps:    []atc.VarScopedPlan{},
+		FailFast: step.FailFast,
 	}
 	for _, vals := range cartesianProduct(step.Vars) {
 		err := step.Step.Visit(visitor)
 		if err != nil {
 			return err
 		}
-		acrossPlan.Steps = append(acrossPlan.Steps, atc.VarScopedPlan{
-			Step:  visitor.plan,
+		acrossPlan.Steps = append(acrossPlan.Steps, atc.InterpVarScopedPlan{
+			Step:   visitor.plan,
 			Values: vals,
 		})
 	}
@@ -261,7 +261,7 @@ func cartesianProduct(vars []atc.AcrossVarConfig) [][]interface{} {
 }
 
 func (visitor *planVisitor) VisitSetPipeline(step *atc.SetPipelineStep) error {
-	visitor.plan = visitor.planFactory.NewPlan(atc.SetPipelinePlan{
+	visitor.plan = visitor.planFactory.NewPlan(atc.InterpSetPipelinePlan{
 		Name:     step.Name,
 		File:     step.File,
 		Team:     step.Team,
@@ -273,7 +273,7 @@ func (visitor *planVisitor) VisitSetPipeline(step *atc.SetPipelineStep) error {
 }
 
 func (visitor *planVisitor) VisitLoadVar(step *atc.LoadVarStep) error {
-	visitor.plan = visitor.planFactory.NewPlan(atc.LoadVarPlan{
+	visitor.plan = visitor.planFactory.NewPlan(atc.InterpLoadVarPlan{
 		Name:   step.Name,
 		File:   step.File,
 		Format: step.Format,
@@ -289,7 +289,7 @@ func (visitor *planVisitor) VisitTry(step *atc.TryStep) error {
 		return err
 	}
 
-	visitor.plan = visitor.planFactory.NewPlan(atc.TryPlan{
+	visitor.plan = visitor.planFactory.NewPlan(atc.InterpTryPlan{
 		Step: visitor.plan,
 	})
 
@@ -302,7 +302,7 @@ func (visitor *planVisitor) VisitTimeout(step *atc.TimeoutStep) error {
 		return err
 	}
 
-	visitor.plan = visitor.planFactory.NewPlan(atc.TimeoutPlan{
+	visitor.plan = visitor.planFactory.NewPlan(atc.InterpTimeoutPlan{
 		Duration: step.Duration,
 		Step:     visitor.plan,
 	})
@@ -311,7 +311,7 @@ func (visitor *planVisitor) VisitTimeout(step *atc.TimeoutStep) error {
 }
 
 func (visitor *planVisitor) VisitRetry(step *atc.RetryStep) error {
-	retryStep := make(atc.RetryPlan, step.Attempts)
+	retryStep := make(atc.InterpRetryPlan, step.Attempts)
 
 	for i := 0; i < step.Attempts; i++ {
 		err := step.Step.Visit(visitor)
@@ -328,7 +328,7 @@ func (visitor *planVisitor) VisitRetry(step *atc.RetryStep) error {
 }
 
 func (visitor *planVisitor) VisitOnSuccess(step *atc.OnSuccessStep) error {
-	plan := atc.OnSuccessPlan{}
+	plan := atc.InterpOnSuccessPlan{}
 
 	err := step.Step.Visit(visitor)
 	if err != nil {
@@ -350,7 +350,7 @@ func (visitor *planVisitor) VisitOnSuccess(step *atc.OnSuccessStep) error {
 }
 
 func (visitor *planVisitor) VisitOnFailure(step *atc.OnFailureStep) error {
-	plan := atc.OnFailurePlan{}
+	plan := atc.InterpOnFailurePlan{}
 
 	err := step.Step.Visit(visitor)
 	if err != nil {
@@ -372,7 +372,7 @@ func (visitor *planVisitor) VisitOnFailure(step *atc.OnFailureStep) error {
 }
 
 func (visitor *planVisitor) VisitOnAbort(step *atc.OnAbortStep) error {
-	plan := atc.OnAbortPlan{}
+	plan := atc.InterpOnAbortPlan{}
 
 	err := step.Step.Visit(visitor)
 	if err != nil {
@@ -394,7 +394,7 @@ func (visitor *planVisitor) VisitOnAbort(step *atc.OnAbortStep) error {
 }
 
 func (visitor *planVisitor) VisitOnError(step *atc.OnErrorStep) error {
-	plan := atc.OnErrorPlan{}
+	plan := atc.InterpOnErrorPlan{}
 
 	err := step.Step.Visit(visitor)
 	if err != nil {
@@ -415,7 +415,7 @@ func (visitor *planVisitor) VisitOnError(step *atc.OnErrorStep) error {
 	return nil
 }
 func (visitor *planVisitor) VisitEnsure(step *atc.EnsureStep) error {
-	plan := atc.EnsurePlan{}
+	plan := atc.InterpEnsurePlan{}
 
 	err := step.Step.Visit(visitor)
 	if err != nil {

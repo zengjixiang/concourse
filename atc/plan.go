@@ -147,8 +147,8 @@ type OnSuccessPlan struct {
 }
 
 type TimeoutPlan struct {
-	Step     Plan   `json:"step" interpolate:"subtypes"`
-	Duration string `json:"duration" interpolate:"root"`
+	Step     Plan     `json:"step" interpolate:"subtypes"`
+	Duration Duration `json:"duration" interpolate:"root"`
 }
 
 type TryPlan struct {
@@ -164,8 +164,8 @@ type InParallelPlan struct {
 }
 
 type AcrossPlan struct {
-	Vars     []AcrossVar     `json:"vars" interpolate:"subtypes,values=subtypes"`
-	Steps    []VarScopedPlan `json:"steps" interpolate:"subtypes,values=subtypes"`
+	Vars     []AcrossVar     `json:"vars" interpolate:"subtypes,values=subtypes,export"`
+	Steps    []VarScopedPlan `json:"steps" interpolate:"subtypes,values=subtypes,export"`
 	FailFast bool            `json:"fail_fast,omitempty" interpolate:"root"`
 }
 
@@ -226,7 +226,7 @@ type TaskPlan struct {
 	Tags       Tags `json:"tags,omitempty" interpolate:"root,values=root"`
 
 	ConfigPath string      `json:"config_path,omitempty" interpolate:"root"`
-	Config     *TaskConfig `json:"config,omitempty" interpolate:"root"`
+	Config     *TaskConfig `json:"config,omitempty" interpolate:"root,export"`
 	Vars       Params      `json:"vars,omitempty" interpolate:"root,keys=root,values=root"`
 
 	Params            Params            `json:"params,omitempty" interpolate:"root,keys=root,values=root"`
@@ -238,11 +238,11 @@ type TaskPlan struct {
 }
 
 type SetPipelinePlan struct {
-	Name     string                 `json:"name" interpolate:"root"`
-	File     string                 `json:"file" interpolate:"root"`
-	Team     string                 `json:"team,omitempty" interpolate:"root"`
-	Vars     map[string]interface{} `json:"vars,omitempty" interpolate:"root,keys=root,values=root"`
-	VarFiles []string               `json:"var_files,omitempty" interpolate:"root,values=root"`
+	Name     string   `json:"name" interpolate:"root"`
+	File     string   `json:"file" interpolate:"root"`
+	Team     string   `json:"team,omitempty" interpolate:"root"`
+	Vars     Params   `json:"vars,omitempty" interpolate:"root,keys=root,values=root"`
+	VarFiles []string `json:"var_files,omitempty" interpolate:"root,values=root"`
 }
 
 type LoadVarPlan struct {

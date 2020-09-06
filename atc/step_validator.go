@@ -3,7 +3,6 @@ package atc
 import (
 	"fmt"
 	"strings"
-	"time"
 )
 
 // StepValidator is a StepVisitor which validates each step that visits it,
@@ -77,7 +76,7 @@ func (validator *StepValidator) VisitTask(plan *TaskStep) error {
 		validator.recordError("must specify one of `file:` or `config:`, not both")
 	}
 
-	if plan.Config != nil && (plan.Config.RootfsURI != "" || plan.Config.ImageResource != nil) && plan.ImageArtifactName != "" {
+	if plan.Config != nil && (plan.Config.Val.RootfsURI != "" || plan.Config.Val.ImageResource != nil) && plan.ImageArtifactName != "" {
 		validator.recordWarning(ConfigWarning{
 			Type:    "pipeline",
 			Message: validator.annotate("specifies image: on the step but also specifies an image under config: - the image: on the step takes precedence"),
@@ -315,14 +314,6 @@ func (validator *StepValidator) VisitTimeout(step *TimeoutStep) error {
 	err := step.Step.Visit(validator)
 	if err != nil {
 		return err
-	}
-
-	validator.pushContext(".timeout")
-	defer validator.popContext()
-
-	_, err = time.ParseDuration(step.Duration)
-	if err != nil {
-		validator.recordError("invalid duration '%s'", step.Duration)
 	}
 
 	return nil

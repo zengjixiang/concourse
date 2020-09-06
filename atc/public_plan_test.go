@@ -6,21 +6,21 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("Plan", func() {
+var _ = Describe("InterpPlan", func() {
 	Describe("Public", func() {
 		It("returns a sanitized form of the plan", func() {
-			plan := atc.Plan{
+			plan := atc.InterpPlan{
 				ID: "0",
-				Aggregate: &atc.AggregatePlan{
-					atc.Plan{
+				Aggregate: &atc.InterpAggregatePlan{
+					atc.InterpPlan{
 						ID: "1",
-						Aggregate: &atc.AggregatePlan{
-							atc.Plan{
+						Aggregate: &atc.InterpAggregatePlan{
+							atc.InterpPlan{
 								ID: "2",
-								Task: &atc.TaskPlan{
+								Task: &atc.InterpTaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
+									Config: &atc.InterpTaskConfig{
 										Params: atc.TaskEnv{"some": "secret"},
 									},
 								},
