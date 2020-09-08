@@ -125,8 +125,8 @@ topBar isPaused =
             Colors.paused
 
         else
-            Colors.frame
-    , style "border-bottom" <| "1px solid " ++ Colors.frame
+            Colors.topBarBackground
+    , style "border-bottom" <| "1px solid " ++ Colors.border
     ]
 
 

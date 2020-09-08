@@ -4,14 +4,20 @@ module Colors exposing
     , asciiArt
     , background
     , backgroundDark
+    , border
     , bottomBarText
     , buildStatusColor
     , buildTooltipText
     , buttonDisabledGrey
     , card
     , cliIconHover
+    , dashboardPipelineHeaderText
     , dashboardText
+    , dashboardTooltipBackground
     , dropdownFaded
+    , dropdownItemInputText
+    , dropdownItemSelectedBackground
+    , dropdownItemSelectedText
     , dropdownUnselectedText
     , error
     , errorFaded
@@ -27,7 +33,10 @@ module Colors exposing
     , groupBorderSelected
     , groupBorderUnselected
     , groupsBarBackground
+    , hamburgerClosedBackground
+    , infoBarBackground
     , inputOutline
+    , noPipelinesPlaceholderBackground
     , paginationHover
     , paused
     , pausedTopbarSeparator
@@ -41,9 +50,11 @@ module Colors exposing
     , retryTabText
     , secondaryTopBar
     , sectionHeader
+    , showArchivedButtonBorder
     , sideBar
     , sideBarActive
     , sideBarHovered
+    , sideBarTooltipBackground
     , started
     , startedFaded
     , statusColor
@@ -51,12 +62,18 @@ module Colors exposing
     , successFaded
     , text
     , tooltipBackground
+    , topBarBackground
     , unknown
     , white
     )
 
+import ColorValues
 import Concourse.BuildStatus exposing (BuildStatus(..))
 import Concourse.PipelineStatus exposing (PipelineStatus(..))
+
+
+
+----
 
 
 frame : String
@@ -64,9 +81,47 @@ frame =
     "#1e1d1d"
 
 
+topBarBackground : String
+topBarBackground =
+    ColorValues.grey100
+
+
+infoBarBackground : String
+infoBarBackground =
+    ColorValues.grey100
+
+
+hamburgerClosedBackground : String
+hamburgerClosedBackground =
+    ColorValues.grey100
+
+
+border : String
+border =
+    ColorValues.black
+
+
+sideBarTooltipBackground : String
+sideBarTooltipBackground =
+    ColorValues.grey20
+
+
+dropdownItemSelectedBackground : String
+dropdownItemSelectedBackground =
+    ColorValues.grey90
+
+
+
+----
+
+
 sectionHeader : String
 sectionHeader =
     "#1e1d1d"
+
+
+
+----
 
 
 dashboardText : String
@@ -74,9 +129,32 @@ dashboardText =
     "#ffffff"
 
 
+dashboardPipelineHeaderText : String
+dashboardPipelineHeaderText =
+    ColorValues.grey20
+
+
+dropdownItemInputText : String
+dropdownItemInputText =
+    ColorValues.grey20
+
+
+dropdownItemSelectedText : String
+dropdownItemSelectedText =
+    ColorValues.grey30
+
+
+
+----
+
+
 bottomBarText : String
 bottomBarText =
-    "#868585"
+    ColorValues.grey40
+
+
+
+----
 
 
 pinned : String
@@ -84,9 +162,22 @@ pinned =
     "#5c3bd1"
 
 
+
+----
+
+
 tooltipBackground : String
 tooltipBackground =
     "#9b9b9b"
+
+
+dashboardTooltipBackground : String
+dashboardTooltipBackground =
+    ColorValues.grey20
+
+
+
+----
 
 
 pinIconHover : String
@@ -94,14 +185,26 @@ pinIconHover =
     "#1e1d1d"
 
 
+
+----
+
+
 pinTools : String
 pinTools =
     "#2e2c2c"
 
 
+
+----
+
+
 white : String
 white =
-    "#ffffff"
+    ColorValues.white
+
+
+
+----
 
 
 background : String
@@ -109,9 +212,27 @@ background =
     "#3d3c3c"
 
 
+noPipelinesPlaceholderBackground : String
+noPipelinesPlaceholderBackground =
+    ColorValues.grey80
+
+
+showArchivedButtonBorder : String
+showArchivedButtonBorder =
+    ColorValues.grey90
+
+
+
+----
+
+
 backgroundDark : String
 backgroundDark =
-    "#323232"
+    ColorValues.grey80
+
+
+
+----
 
 
 started : String
@@ -119,9 +240,17 @@ started =
     "#fad43b"
 
 
+
+----
+
+
 startedFaded : String
 startedFaded =
     "#f1c40f"
+
+
+
+----
 
 
 success : String
@@ -129,9 +258,17 @@ success =
     "#11c560"
 
 
+
+----
+
+
 successFaded : String
 successFaded =
     "#419867"
+
+
+
+----
 
 
 paused : String
