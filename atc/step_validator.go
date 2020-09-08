@@ -3,7 +3,6 @@ package atc
 import (
 	"fmt"
 	"strings"
-	"time"
 )
 
 // StepValidator is a StepVisitor which validates each step that visits it,
@@ -77,17 +76,18 @@ func (validator *StepValidator) VisitTask(plan *TaskStep) error {
 		validator.recordError("must specify one of `file:` or `config:`, not both")
 	}
 
-	if plan.Config != nil && (plan.Config.RootfsURI != "" || plan.Config.ImageResource != nil) && plan.ImageArtifactName != "" {
-		validator.recordWarning(ConfigWarning{
-			Type:    "pipeline",
-			Message: validator.annotate("specifies image: on the step but also specifies an image under config: - the image: on the step takes precedence"),
-		})
-	}
-
 	if plan.Config != nil {
+		config, ok := plan.Config.I.(TaskConfig)
+		if ok && (config.RootfsURI != "" || config.ImageResource != nil) && plan.ImageArtifactName != "" {
+			validator.recordWarning(ConfigWarning{
+				Type:    "pipeline",
+				Message: validator.annotate("specifies image: on the step but also specifies an image under config: - the image: on the step takes precedence"),
+			})
+		}
+
 		validator.pushContext(".config")
 
-		if err := plan.Config.Validate(); err != nil {
+		if err := config.Validate(); err != nil {
 			if validationErr, ok := err.(TaskValidationError); ok {
 				for _, msg := range validationErr.Errors {
 					validator.recordError(msg)
@@ -184,9 +184,11 @@ func (validator *StepValidator) VisitSetPipeline(step *SetPipelineStep) error {
 	validator.pushContext(".set_pipeline(%s)", step.Name)
 	defer validator.popContext()
 
-	warning := ValidateIdentifier(step.Name, validator.context...)
-	if warning != nil {
-		validator.recordWarning(*warning)
+	if step.Name.IsStatic() {
+		warning := ValidateIdentifier(string(step.Name), validator.context...)
+		if warning != nil {
+			validator.recordWarning(*warning)
+		}
 	}
 
 	if step.File == "" {
@@ -204,7 +206,6 @@ func (validator *StepValidator) VisitLoadVar(step *LoadVarStep) error {
 	if warning != nil {
 		validator.recordWarning(*warning)
 	}
-
 	validator.declareLocalVar(step.Name)
 
 	if step.File == "" {
@@ -301,8 +302,10 @@ func (validator *StepValidator) VisitAcross(step *AcrossStep) error {
 		validator.declareLocalVar(v.Var)
 
 		validator.pushContext(".max_in_flight")
-		if v.MaxInFlight != nil && !v.MaxInFlight.All && v.MaxInFlight.Limit <= 0 {
-			validator.recordError("must be greater than 0")
+		if v.MaxInFlight != nil {
+			if config, ok := v.MaxInFlight.I.(MaxInFlightConfig); ok && !config.All && config.Limit <= 0 {
+				validator.recordError("must be greater than 0")
+			}
 		}
 		validator.popContext()
 		validator.popContext()
@@ -315,14 +318,6 @@ func (validator *StepValidator) VisitTimeout(step *TimeoutStep) error {
 	err := step.Step.Visit(validator)
 	if err != nil {
 		return err
-	}
-
-	validator.pushContext(".timeout")
-	defer validator.popContext()
-
-	_, err = time.ParseDuration(step.Duration)
-	if err != nil {
-		validator.recordError("invalid duration '%s'", step.Duration)
 	}
 
 	return nil

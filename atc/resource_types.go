@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+
+	"github.com/concourse/concourse/vars/interp"
 )
 
 type MetadataField struct {
@@ -11,7 +13,7 @@ type MetadataField struct {
 	Value string `json:"value"`
 }
 
-type Source map[string]interface{}
+type Source map[interp.String]interp.Any
 
 func (src Source) MarshalJSON() ([]byte, error) {
 	if src == nil {
@@ -26,7 +28,7 @@ func (src Source) MarshalJSON() ([]byte, error) {
 	return json.Marshal(strKeys)
 }
 
-type Params map[string]interface{}
+type Params map[interp.String]interp.Any
 
 func (ps Params) MarshalJSON() ([]byte, error) {
 	if ps == nil {

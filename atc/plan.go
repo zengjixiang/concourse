@@ -1,5 +1,15 @@
 package atc
 
+import (
+	"github.com/concourse/concourse/vars/interp"
+)
+
+//go:generate go run github.com/concourse/concourse/vars/interp/interpgen . interpolate.go
+
+//interpgen:generate Params
+//interpgen:generate Tags
+//interpgen:generate TaskConfig export
+
 type Plan struct {
 	ID       PlanID `json:"id"`
 	Attempts []int  `json:"attempts,omitempty"`
@@ -143,8 +153,8 @@ type OnSuccessPlan struct {
 }
 
 type TimeoutPlan struct {
-	Step     Plan   `json:"step"`
-	Duration string `json:"duration"`
+	Step     Plan           `json:"step"`
+	Duration interpDuration `json:"duration"`
 }
 
 type TryPlan struct {
@@ -154,21 +164,21 @@ type TryPlan struct {
 type AggregatePlan []Plan
 
 type InParallelPlan struct {
-	Steps    []Plan `json:"steps"`
-	Limit    int    `json:"limit,omitempty"`
-	FailFast bool   `json:"fail_fast,omitempty"`
+	Steps    []Plan      `json:"steps"`
+	Limit    interp.Int  `json:"limit,omitempty"`
+	FailFast interp.Bool `json:"fail_fast,omitempty"`
 }
 
 type AcrossPlan struct {
 	Vars     []AcrossVar     `json:"vars"`
 	Steps    []VarScopedPlan `json:"steps"`
-	FailFast bool            `json:"fail_fast,omitempty"`
+	FailFast interp.Bool     `json:"fail_fast,omitempty"`
 }
 
 type AcrossVar struct {
-	Var         string        `json:"name"`
-	Values      []interface{} `json:"values"`
-	MaxInFlight int           `json:"max_in_flight"`
+	Var         string                  `json:"name"`
+	Values      []interface{}           `json:"values"`
+	MaxInFlight interpMaxInFlightConfig `json:"max_in_flight"`
 }
 
 type VarScopedPlan struct {
@@ -181,36 +191,36 @@ type DoPlan []Plan
 type GetPlan struct {
 	Name string `json:"name,omitempty"`
 
-	Type        string   `json:"type"`
-	Resource    string   `json:"resource"`
-	Source      Source   `json:"source"`
-	Params      Params   `json:"params,omitempty"`
-	Version     *Version `json:"version,omitempty"`
-	VersionFrom *PlanID  `json:"version_from,omitempty"`
-	Tags        Tags     `json:"tags,omitempty"`
+	Type        string       `json:"type"`
+	Resource    string       `json:"resource"`
+	Source      interpSource `json:"source"`
+	Params      interpParams `json:"params,omitempty"`
+	Version     *Version     `json:"version,omitempty"`
+	VersionFrom *PlanID      `json:"version_from,omitempty"`
+	Tags        interpTags   `json:"tags,omitempty"`
 
 	VersionedResourceTypes VersionedResourceTypes `json:"resource_types,omitempty"`
 }
 
 type PutPlan struct {
-	Type     string        `json:"type"`
-	Name     string        `json:"name,omitempty"`
-	Resource string        `json:"resource"`
-	Source   Source        `json:"source"`
-	Params   Params        `json:"params,omitempty"`
-	Tags     Tags          `json:"tags,omitempty"`
-	Inputs   *InputsConfig `json:"inputs,omitempty"`
+	Type     string              `json:"type"`
+	Name     string              `json:"name,omitempty"`
+	Resource string              `json:"resource"`
+	Source   interpSource        `json:"source"`
+	Params   interpParams        `json:"params,omitempty"`
+	Tags     interpTags          `json:"tags,omitempty"`
+	Inputs   *interpInputsConfig `json:"inputs,omitempty"`
 
 	VersionedResourceTypes VersionedResourceTypes `json:"resource_types,omitempty"`
 }
 
 type CheckPlan struct {
-	Type        string  `json:"type"`
-	Name        string  `json:"name,omitempty"`
-	Source      Source  `json:"source"`
-	Tags        Tags    `json:"tags,omitempty"`
-	Timeout     string  `json:"timeout,omitempty"`
-	FromVersion Version `json:"from_version,omitempty"`
+	Type        string       `json:"type"`
+	Name        string       `json:"name,omitempty"`
+	Source      interpSource `json:"source"`
+	Tags        interpTags   `json:"tags,omitempty"`
+	Timeout     string       `json:"timeout,omitempty"`
+	FromVersion Version      `json:"from_version,omitempty"`
 
 	VersionedResourceTypes VersionedResourceTypes `json:"resource_types,omitempty"`
 }
@@ -218,34 +228,42 @@ type CheckPlan struct {
 type TaskPlan struct {
 	Name string `json:"name,omitempty"`
 
-	Privileged bool `json:"privileged"`
-	Tags       Tags `json:"tags,omitempty"`
+	Privileged interp.Bool `json:"privileged"`
+	Tags       interpTags  `json:"tags,omitempty"`
 
-	ConfigPath string      `json:"config_path,omitempty"`
-	Config     *TaskConfig `json:"config,omitempty"`
-	Vars       Params      `json:"vars,omitempty"`
+	ConfigPath interp.String     `json:"config_path,omitempty"`
+	Config     *InterpTaskConfig `json:"config,omitempty"`
+	Vars       interpParams      `json:"vars,omitempty"`
 
-	Params            Params            `json:"params,omitempty"`
-	InputMapping      map[string]string `json:"input_mapping,omitempty"`
-	OutputMapping     map[string]string `json:"output_mapping,omitempty"`
-	ImageArtifactName string            `json:"image,omitempty"`
+	Params            interpParams      `json:"params,omitempty"`
+	InputMapping      interpFileMapping `json:"input_mapping,omitempty"`
+	OutputMapping     interpFileMapping `json:"output_mapping,omitempty"`
+	ImageArtifactName interp.String     `json:"image,omitempty"`
 
 	VersionedResourceTypes VersionedResourceTypes `json:"resource_types,omitempty"`
 }
 
+//interpgen:generate FileMapping
+
+type FileMapping map[interp.String]interp.String
+
 type SetPipelinePlan struct {
-	Name     string                 `json:"name"`
-	File     string                 `json:"file"`
-	Team     string                 `json:"team,omitempty"`
-	Vars     map[string]interface{} `json:"vars,omitempty"`
-	VarFiles []string               `json:"var_files,omitempty"`
+	Name     interp.String    `json:"name"`
+	File     interp.String    `json:"file"`
+	Team     interp.String    `json:"team,omitempty"`
+	Vars     interpParams     `json:"vars,omitempty"`
+	VarFiles interpStringList `json:"var_files,omitempty"`
 }
 
+//interpgen:generate stringList
+
+type stringList []interp.String
+
 type LoadVarPlan struct {
-	Name   string `json:"name"`
-	File   string `json:"file"`
-	Format string `json:"format,omitempty"`
-	Reveal bool   `json:"reveal,omitempty"`
+	Name   string        `json:"name"`
+	File   interp.String `json:"file"`
+	Format interp.String `json:"format,omitempty"`
+	Reveal interp.Bool   `json:"reveal,omitempty"`
 }
 
 type RetryPlan []Plan

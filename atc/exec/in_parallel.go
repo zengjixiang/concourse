@@ -7,22 +7,31 @@ import (
 	"os"
 	"runtime/debug"
 
+	"github.com/concourse/concourse/atc"
+	"github.com/concourse/concourse/vars/interp"
 	"github.com/hashicorp/go-multierror"
 )
 
+type interpMaxInFlightConfig interface {
+	Interpolate(interp.Resolver) (atc.MaxInFlightConfig, error)
+}
+
+type interpBool interface {
+	Interpolate(interp.Resolver) (bool, error)
+}
+
 // InParallelStep is a step of steps to run in parallel.
 type InParallelStep struct {
+	resolver interp.Resolver
 	steps    []Step
-	limit    int
-	failFast bool
+	limit    interpMaxInFlightConfig
+	failFast interpBool
 }
 
 // InParallel constructs an InParallelStep.
-func InParallel(steps []Step, limit int, failFast bool) InParallelStep {
-	if limit < 1 {
-		limit = len(steps)
-	}
+func InParallel(resolver interp.Resolver, steps []Step, limit interpMaxInFlightConfig, failFast interpBool) InParallelStep {
 	return InParallelStep{
+		resolver: resolver,
 		steps:    steps,
 		limit:    limit,
 		failFast: failFast,
@@ -40,9 +49,23 @@ func InParallel(steps []Step, limit int, failFast bool) InParallelStep {
 // After all steps finish, their errors (if any) will be collected and returned as a
 // single error.
 func (step InParallelStep) Run(ctx context.Context, state RunState) error {
+	maxInFlightConfig, err := step.limit.Interpolate(step.resolver)
+	if err != nil {
+		return err
+	}
+	limit := maxInFlightConfig.Limit
+	if maxInFlightConfig.All {
+		limit = len(step.steps)
+	}
+
+	failFast, err := step.failFast.Interpolate(step.resolver)
+	if err != nil {
+		return err
+	}
+
 	var (
 		errs          = make(chan error, len(step.steps))
-		sem           = make(chan bool, step.limit)
+		sem           = make(chan bool, limit)
 		executedSteps int
 	)
 
@@ -71,7 +94,7 @@ func (step InParallelStep) Run(ctx context.Context, state RunState) error {
 			}()
 
 			errs <- s.Run(runCtx, state)
-			if !s.Succeeded() && step.failFast {
+			if !s.Succeeded() && failFast {
 				cancel()
 			}
 		}()

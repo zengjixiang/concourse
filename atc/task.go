@@ -6,44 +6,49 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/concourse/concourse/vars/interp"
 	"sigs.k8s.io/yaml"
 )
 
 type TaskConfig struct {
 	// The platform the task must run on (e.g. linux, windows).
-	Platform string `json:"platform,omitempty"`
+	Platform interp.String `json:"platform,omitempty"`
 
 	// Optional string specifying an image to use for the build. Depending on the
 	// platform, this may or may not be required (e.g. Windows/OS X vs. Linux).
-	RootfsURI string `json:"rootfs_uri,omitempty"`
+	RootfsURI interp.String `json:"rootfs_uri,omitempty"`
 
-	ImageResource *ImageResource `json:"image_resource,omitempty"`
+	ImageResource *interpImageResource `json:"image_resource,omitempty"`
 
 	// Limits to set on the Task Container
-	Limits *ContainerLimits `json:"container_limits,omitempty"`
+	Limits *interpContainerLimits `json:"container_limits,omitempty"`
 
 	// Parameters to pass to the task via environment variables.
-	Params TaskEnv `json:"params,omitempty"`
+	Params interpTaskEnv `json:"params,omitempty"`
 
 	// Script to execute.
-	Run TaskRunConfig `json:"run,omitempty"`
+	Run interpTaskRunConfig `json:"run,omitempty"`
 
 	// The set of (logical, name-only) inputs required by the task.
-	Inputs []TaskInputConfig `json:"inputs,omitempty"`
+	Inputs interpTaskInputConfigs `json:"inputs,omitempty"`
 
 	// The set of (logical, name-only) outputs provided by the task.
-	Outputs []TaskOutputConfig `json:"outputs,omitempty"`
+	Outputs interpTaskOutputConfigs `json:"outputs,omitempty"`
 
 	// Path to cached directory that will be shared between builds for the same task.
-	Caches []TaskCacheConfig `json:"caches,omitempty"`
+	Caches interpTaskCacheConfigs `json:"caches,omitempty"`
 }
 
-type ImageResource struct {
-	Type   string `json:"type"`
-	Source Source `json:"source"`
+//interpgen:generate ImageResource
+//interpgen:generate Source
+//interpgen:generate Version
 
-	Params  Params  `json:"params,omitempty"`
-	Version Version `json:"version,omitempty"`
+type ImageResource struct {
+	Type   interp.String `json:"type"`
+	Source interpSource  `json:"source"`
+
+	Params  interpParams  `json:"params,omitempty"`
+	Version interpVersion `json:"version,omitempty"`
 }
 
 func NewTaskConfig(configBytes []byte) (TaskConfig, error) {
@@ -76,7 +81,7 @@ func (config TaskConfig) Validate() error {
 		errors = append(errors, "missing 'platform'")
 	}
 
-	if config.Run.Path == "" {
+	if run, ok := config.Run.I.(TaskRunConfig); ok && run.Path == "" {
 		errors = append(errors, "missing path to executable to run")
 	}
 
@@ -93,10 +98,14 @@ func (config TaskConfig) Validate() error {
 }
 
 func (config TaskConfig) validateOutputContainsNames() []string {
-	var messages []string
+	outputs, ok := config.Outputs.I.(TaskOutputConfigs)
+	if !ok {
+		return nil
+	}
 
-	for i, output := range config.Outputs {
-		if output.Name == "" {
+	var messages []string
+	for i, output := range outputs {
+		if output, ok := output.I.(TaskOutputConfig); ok && output.Name == "" {
 			messages = append(messages, fmt.Sprintf("  output in position %d is missing a name", i))
 		}
 	}
@@ -105,10 +114,14 @@ func (config TaskConfig) validateOutputContainsNames() []string {
 }
 
 func (config TaskConfig) validateInputContainsNames() []string {
-	messages := []string{}
+	inputs, ok := config.Inputs.I.(TaskInputConfigs)
+	if !ok {
+		return nil
+	}
 
-	for i, input := range config.Inputs {
-		if input.Name == "" {
+	messages := []string{}
+	for i, input := range inputs {
+		if input, ok := input.I.(TaskInputConfig); ok && input.Name == "" {
 			messages = append(messages, fmt.Sprintf("  input in position %d is missing a name", i))
 		}
 	}
@@ -116,89 +129,104 @@ func (config TaskConfig) validateInputContainsNames() []string {
 	return messages
 }
 
+//interpgen:generate TaskRunConfig
+
 type TaskRunConfig struct {
-	Path string   `json:"path"`
-	Args []string `json:"args,omitempty"`
-	Dir  string   `json:"dir,omitempty"`
+	Path interp.String    `json:"path"`
+	Args interpStringList `json:"args,omitempty"`
+	Dir  interp.String    `json:"dir,omitempty"`
 
 	// The user that the task will run as (defaults to whatever the docker image specifies)
-	User string `json:"user,omitempty"`
+	User interp.String `json:"user,omitempty"`
 }
+
+//interpgen:generate TaskInputConfig
 
 type TaskInputConfig struct {
-	Name     string `json:"name"`
-	Path     string `json:"path,omitempty"`
-	Optional bool   `json:"optional,omitempty"`
+	Name     interp.String `json:"name"`
+	Path     interp.String `json:"path,omitempty"`
+	Optional interp.Bool   `json:"optional,omitempty"`
 }
+
+//interpgen:generate TaskInputConfigs
+
+type TaskInputConfigs []interpTaskInputConfig
+
+//interpgen:generate TaskOutputConfig
 
 type TaskOutputConfig struct {
-	Name string `json:"name"`
-	Path string `json:"path,omitempty"`
+	Name interp.String `json:"name"`
+	Path interp.String `json:"path,omitempty"`
 }
+
+//interpgen:generate TaskOutputConfigs
+
+type TaskOutputConfigs []interpTaskOutputConfig
+
+//interpgen:generate TaskCacheConfig
 
 type TaskCacheConfig struct {
-	Path string `json:"path,omitempty"`
+	Path interp.String `json:"path,omitempty"`
 }
 
-type TaskEnv map[string]string
+//interpgen:generate TaskCacheConfigs
 
-func (te *TaskEnv) UnmarshalJSON(p []byte) error {
-	raw := map[string]CoercedString{}
-	err := json.Unmarshal(p, &raw)
-	if err != nil {
-		return err
-	}
+type TaskCacheConfigs []interpTaskCacheConfig
 
-	m := map[string]string{}
-	for k, v := range raw {
-		m[k] = string(v)
-	}
+//interpgen:generate TaskEnv
 
-	*te = m
+type TaskEnv map[interp.String]interpCoercedString
 
-	return nil
-}
-
-func (te TaskEnv) Env() []string {
+func (te TaskEnv) Env(resolver interp.Resolver) ([]string, error) {
 	env := make([]string, 0, len(te))
 
 	for k, v := range te {
-		env = append(env, k+"="+v)
+		ki, err := k.Interpolate(resolver)
+		if err != nil {
+			return nil, err
+		}
+		vi, err := v.I.Interpolate(resolver)
+		if err != nil {
+			return nil, err
+		}
+		vii, err := vi.InterpolateToString(resolver)
+		if err != nil {
+			return nil, err
+		}
+		env = append(env, ki+"="+vii)
 	}
 
-	return env
+	return env, nil
 }
 
-type CoercedString string
+//interpgen:generate CoercedString
+
+type CoercedString struct {
+	raw interface{}
+}
 
 func (cs *CoercedString) UnmarshalJSON(p []byte) error {
-	var raw interface{}
 	dec := json.NewDecoder(bytes.NewReader(p))
 	dec.UseNumber()
-	err := dec.Decode(&raw)
-	if err != nil {
-		return err
-	}
+	return dec.Decode(&cs.raw)
+}
 
-	if raw == nil {
-		*cs = CoercedString("")
-		return nil
+func (cs CoercedString) InterpolateToString(resolver interp.Resolver) (string, error) {
+	if cs.raw == nil {
+		return "", nil
 	}
-	switch v := raw.(type) {
+	switch v := cs.raw.(type) {
 	case string:
-		*cs = CoercedString(v)
+		return interp.String(v).Interpolate(resolver)
 
 	case json.Number:
-		*cs = CoercedString(v)
+		return string(v), nil
 
 	default:
 		j, err := json.Marshal(v)
 		if err != nil {
-			return err
+			return "", err
 		}
-
-		*cs = CoercedString(j)
+		return string(j), nil
 	}
-
-	return nil
 }

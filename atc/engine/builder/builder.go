@@ -2,6 +2,7 @@ package builder
 
 import (
 	"code.cloudfoundry.org/lager"
+	"github.com/concourse/concourse/vars/interp"
 
 	"errors"
 	"fmt"
@@ -231,7 +232,26 @@ func (builder *stepBuilder) buildParallelStep(build db.Build, plan atc.Plan, bui
 		steps = append(steps, step)
 	}
 
-	return exec.InParallel(steps, plan.InParallel.Limit, plan.InParallel.FailFast)
+	return exec.InParallel(
+		buildVars,
+		steps,
+		interpMaxInFlightConfig{LimitI: plan.InParallel.Limit.I},
+		plan.InParallel.FailFast.I,
+	)
+}
+
+type interpMaxInFlightConfig struct {
+	LimitI interface {
+		Interpolate(interp.Resolver) (int, error)
+	}
+}
+
+func (m interpMaxInFlightConfig) Interpolate(resolver interp.Resolver) (atc.MaxInFlightConfig, error) {
+	limit, err := m.LimitI.Interpolate(resolver)
+	if err != nil {
+		return atc.MaxInFlightConfig{}, err
+	}
+	return atc.MaxInFlightConfig{Limit: limit, All: limit < 1}, nil
 }
 
 func (builder *stepBuilder) buildAcrossStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
@@ -268,7 +288,7 @@ func (builder *stepBuilder) buildAcrossInParallelStep(build db.Build, varIndex i
 			}
 			steps = append(steps, builder.buildStep(build, step.Step, scopedBuildVars))
 		}
-		return exec.InParallel(steps, plan.Vars[varIndex].MaxInFlight, plan.FailFast)
+		return exec.InParallel(buildVars, steps, plan.Vars[varIndex].MaxInFlight.I, plan.FailFast.I)
 	}
 	stepsPerValue := 1
 	for _, v := range plan.Vars[varIndex+1:] {
@@ -283,7 +303,7 @@ func (builder *stepBuilder) buildAcrossInParallelStep(build db.Build, varIndex i
 		planCopy.Steps = plan.Steps[startIndex:endIndex]
 		substeps[i] = builder.buildAcrossInParallelStep(build, varIndex+1, planCopy, buildVars)
 	}
-	return exec.InParallel(substeps, plan.Vars[varIndex].MaxInFlight, plan.FailFast)
+	return exec.InParallel(buildVars, substeps, plan.Vars[varIndex].MaxInFlight.I, plan.FailFast.I)
 }
 
 func (builder *stepBuilder) buildDoStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {
@@ -304,7 +324,7 @@ func (builder *stepBuilder) buildTimeoutStep(build db.Build, plan atc.Plan, buil
 	innerPlan := plan.Timeout.Step
 	innerPlan.Attempts = plan.Attempts
 	step := builder.buildStep(build, innerPlan, buildVars)
-	return exec.Timeout(step, plan.Timeout.Duration)
+	return exec.Timeout(buildVars, step, plan.Timeout.Duration.I)
 }
 
 func (builder *stepBuilder) buildTryStep(build db.Build, plan atc.Plan, buildVars *vars.BuildVariables) exec.Step {

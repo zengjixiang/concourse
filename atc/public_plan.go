@@ -1,6 +1,10 @@
 package atc
 
-import "encoding/json"
+import (
+	"encoding/json"
+
+	"github.com/concourse/concourse/vars/interp"
+)
 
 func (plan Plan) Public() *json.RawMessage {
 	var public struct {
@@ -137,8 +141,8 @@ func (plan InParallelPlan) Public() *json.RawMessage {
 
 	return enc(struct {
 		Steps    []*json.RawMessage `json:"steps"`
-		Limit    int                `json:"limit,omitempty"`
-		FailFast bool               `json:"fail_fast,omitempty"`
+		Limit    interp.Int         `json:"limit,omitempty"`
+		FailFast interp.Bool        `json:"fail_fast,omitempty"`
 	}{
 		Steps:    steps,
 		Limit:    plan.Limit,
@@ -161,13 +165,13 @@ func (plan AcrossPlan) Public() *json.RawMessage {
 	}
 
 	return enc(struct {
-		Vars        []AcrossVar  `json:"vars"`
-		Steps       []scopedStep `json:"steps"`
-		FailFast    bool         `json:"fail_fast,omitempty"`
+		Vars     []AcrossVar  `json:"vars"`
+		Steps    []scopedStep `json:"steps"`
+		FailFast interp.Bool  `json:"fail_fast,omitempty"`
 	}{
-		Vars:        plan.Vars,
-		Steps:       steps,
-		FailFast:    plan.FailFast,
+		Vars:     plan.Vars,
+		Steps:    steps,
+		FailFast: plan.FailFast,
 	})
 }
 
@@ -281,8 +285,8 @@ func (plan CheckPlan) Public() *json.RawMessage {
 
 func (plan TaskPlan) Public() *json.RawMessage {
 	return enc(struct {
-		Name       string `json:"name"`
-		Privileged bool   `json:"privileged"`
+		Name       string      `json:"name"`
+		Privileged interp.Bool `json:"privileged"`
 	}{
 		Name:       plan.Name,
 		Privileged: plan.Privileged,
@@ -291,8 +295,8 @@ func (plan TaskPlan) Public() *json.RawMessage {
 
 func (plan SetPipelinePlan) Public() *json.RawMessage {
 	return enc(struct {
-		Name string `json:"name"`
-		Team string `json:"team"`
+		Name interp.String `json:"name"`
+		Team interp.String `json:"team"`
 	}{
 		Name: plan.Name,
 		Team: plan.Team,
@@ -310,7 +314,7 @@ func (plan LoadVarPlan) Public() *json.RawMessage {
 func (plan TimeoutPlan) Public() *json.RawMessage {
 	return enc(struct {
 		Step     *json.RawMessage `json:"step"`
-		Duration string           `json:"duration"`
+		Duration interpDuration   `json:"duration"`
 	}{
 		Step:     plan.Step.Public(),
 		Duration: plan.Duration,

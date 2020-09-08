@@ -20,9 +20,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 						},
@@ -35,9 +35,9 @@ var _ = Describe("Plan", func() {
 							Name:     "name",
 							Resource: "resource",
 							Source:   atc.Source{"some": "source"},
-							Params:   atc.Params{"some": "params"},
+							Params:   atc.Params{"some": "params"}.ToInterpolatable(),
 							Version:  &atc.Version{"some": "version"},
-							Tags:     atc.Tags{"tags"},
+							Tags:     atc.Tags{"tags"}.ToInterpolatable(),
 						},
 					},
 
@@ -48,8 +48,8 @@ var _ = Describe("Plan", func() {
 							Name:     "name",
 							Resource: "resource",
 							Source:   atc.Source{"some": "source"},
-							Params:   atc.Params{"some": "params"},
-							Tags:     atc.Tags{"tags"},
+							Params:   atc.Params{"some": "params"}.ToInterpolatable(),
+							Tags:     atc.Tags{"tags"}.ToInterpolatable(),
 						},
 					},
 
@@ -68,11 +68,11 @@ var _ = Describe("Plan", func() {
 						Task: &atc.TaskPlan{
 							Name:       "name",
 							Privileged: true,
-							Tags:       atc.Tags{"tags"},
+							Tags:       atc.Tags{"tags"}.ToInterpolatable(),
 							ConfigPath: "some/config/path.yml",
-							Config: &atc.TaskConfig{
-								Params: atc.TaskEnv{"some": "secret"},
-							},
+							Config: atc.TaskConfig{
+								Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+							}.ToInterpolatablePtr(),
 						},
 					},
 
@@ -84,9 +84,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 							Next: atc.Plan{
@@ -94,9 +94,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 						},
@@ -110,9 +110,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 							Next: atc.Plan{
@@ -120,9 +120,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 						},
@@ -136,9 +136,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 							Next: atc.Plan{
@@ -146,9 +146,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 						},
@@ -162,9 +162,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 							Next: atc.Plan{
@@ -172,9 +172,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 						},
@@ -188,9 +188,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 						},
@@ -204,9 +204,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 							Duration: "lol",
@@ -221,9 +221,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 						},
@@ -237,9 +237,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 							atc.Plan{
@@ -247,9 +247,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 							atc.Plan{
@@ -257,9 +257,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 						},
@@ -273,9 +273,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 							Next: atc.Plan{
@@ -283,9 +283,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 						},
@@ -314,9 +314,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 							Next: atc.Plan{
@@ -324,9 +324,9 @@ var _ = Describe("Plan", func() {
 								Task: &atc.TaskPlan{
 									Name:       "name",
 									ConfigPath: "some/config/path.yml",
-									Config: &atc.TaskConfig{
-										Params: atc.TaskEnv{"some": "secret"},
-									},
+									Config: atc.TaskConfig{
+										Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+									}.ToInterpolatablePtr(),
 								},
 							},
 						},
@@ -342,9 +342,9 @@ var _ = Describe("Plan", func() {
 									Task: &atc.TaskPlan{
 										Name:       "name",
 										ConfigPath: "some/config/path.yml",
-										Config: &atc.TaskConfig{
-											Params: atc.TaskEnv{"some": "secret"},
-										},
+										Config: atc.TaskConfig{
+											Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+										}.ToInterpolatablePtr(),
 									},
 								},
 							},
@@ -382,9 +382,9 @@ var _ = Describe("Plan", func() {
 										Task: &atc.TaskPlan{
 											Name:       "name",
 											ConfigPath: "some/config/path.yml",
-											Config: &atc.TaskConfig{
-												Params: atc.TaskEnv{"some": "secret"},
-											},
+											Config: atc.TaskConfig{
+												Params: atc.TaskEnv{"some": "secret"}.ToInterpolatable(),
+											}.ToInterpolatablePtr(),
 										},
 									},
 									Values: []interface{}{"a", "b"},

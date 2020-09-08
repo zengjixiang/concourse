@@ -10,10 +10,14 @@ import (
 
 var memoryRegex = regexp.MustCompile(`^([0-9]+)([GMK]?[B])?$`)
 
+//interpgen:generate ContainerLimits
+
 type ContainerLimits struct {
-	CPU    *CPULimit    `json:"cpu,omitempty"`
-	Memory *MemoryLimit `json:"memory,omitempty"`
+	CPU    *interpCPULimit    `json:"cpu,omitempty"`
+	Memory *interpMemoryLimit `json:"memory,omitempty"`
 }
+
+//interpgen:generate CPULimit
 
 type CPULimit uint64
 
@@ -25,6 +29,8 @@ func (c *CPULimit) UnmarshalJSON(data []byte) error {
 	*c = CPULimit(target)
 	return nil
 }
+
+//interpgen:generate MemoryLimit
 
 type MemoryLimit uint64
 

@@ -1,5 +1,9 @@
 package vars
 
+import (
+	"fmt"
+)
+
 type BuildVariables struct {
 	parentScope interface {
 		Variables
@@ -66,4 +70,15 @@ func (b *BuildVariables) AddLocalVar(name string, val interface{}, redact bool) 
 
 func (b *BuildVariables) RedactionEnabled() bool {
 	return b.tracker.enabled
+}
+
+func (b *BuildVariables) Resolve(v VariableReference) (interface{}, error) {
+	val, found, err := b.Get(VariableDefinition{Ref: v})
+	if err != nil {
+		return nil, err
+	}
+	if !found {
+		return nil, fmt.Errorf("requested var %q was not found", v.Name)
+	}
+	return val, nil
 }
