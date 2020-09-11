@@ -39,7 +39,6 @@ module Colors exposing
     , noPipelinesPlaceholderBackground
     , paginationHover
     , paused
-    , pausedTopbarSeparator
     , pending
     , pendingFaded
     , pinHighlight
@@ -321,9 +320,17 @@ abortedFaded =
     "#6a401c"
 
 
+
+-----
+
+
 card : String
 card =
-    "#2a2929"
+    ColorValues.grey90
+
+
+
+-----
 
 
 secondaryTopBar : String
@@ -346,14 +353,26 @@ flySuccessTokenCopied =
     "#196ac8"
 
 
+
+-----
+
+
 resourceError : String
 resourceError =
-    "#e67e22"
+    ColorValues.error40
+
+
+
+-----
 
 
 cliIconHover : String
 cliIconHover =
-    "#ffffff"
+    ColorValues.white
+
+
+
+-----
 
 
 text : String
@@ -361,9 +380,17 @@ text =
     "#e6e7e8"
 
 
+
+-----
+
+
 asciiArt : String
 asciiArt =
-    "#888888"
+    ColorValues.grey50
+
+
+
+-----
 
 
 paginationHover : String
@@ -371,9 +398,17 @@ paginationHover =
     "#504b4b"
 
 
+
+----
+
+
 inputOutline : String
 inputOutline =
-    "#504b4b"
+    ColorValues.grey60
+
+
+
+-----
 
 
 groupsBarBackground : String
@@ -381,29 +416,35 @@ groupsBarBackground =
     "#2b2a2a"
 
 
+
+----
+
+
 buildTooltipText : String
 buildTooltipText =
     "#ecf0f1"
 
 
-pausedTopbarSeparator : String
-pausedTopbarSeparator =
-    "rgba(255, 255, 255, 0.5)"
+
+----
 
 
 dropdownFaded : String
 dropdownFaded =
-    "#2e2e2e"
+    ColorValues.grey80
+
+
+
+----
 
 
 dropdownUnselectedText : String
 dropdownUnselectedText =
-    "#9b9b9b"
+    ColorValues.grey40
 
 
-pinHighlight : String
-pinHighlight =
-    "rgba(255, 255, 255, 0.3)"
+
+----
 
 
 groupBorderSelected : String
@@ -424,6 +465,10 @@ groupBorderHovered =
 groupBackground : String
 groupBackground =
     "rgba(151, 151, 151, 0.1)"
+
+
+
+----
 
 
 sideBar : String

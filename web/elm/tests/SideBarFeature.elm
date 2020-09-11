@@ -1405,11 +1405,6 @@ iSeeADarkDividingLineToTheRight =
         ]
 
 
-iSeeAWhiteDividingLineToTheRight =
-    Query.has
-        [ style "border-right" <| "1px solid " ++ Colors.pausedTopbarSeparator ]
-
-
 itIsHoverable domID =
     Expect.all
         [ Event.simulate Event.mouseEnter
