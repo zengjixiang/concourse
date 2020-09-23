@@ -58,7 +58,7 @@ tooltipOffset =
 sideBar : { r | width : Float } -> List (Html.Attribute msg)
 sideBar { width } =
     [ style "border-right" <| "1px solid " ++ Colors.border
-    , style "background-color" Colors.sideBar
+    , style "background-color" Colors.sideBarBackground
     , style "width" <| String.fromFloat width ++ "px"
     , style "overflow-y" "auto"
     , style "height" "100%"
@@ -249,7 +249,7 @@ hamburgerMenu { isSideBarOpen, isClickable } =
             "default"
     , style "background-color" <|
         if isSideBarOpen then
-            Colors.sideBar
+            Colors.sideBarBackground
 
         else
             Colors.hamburgerClosedBackground

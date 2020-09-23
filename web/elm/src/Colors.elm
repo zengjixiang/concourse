@@ -41,7 +41,6 @@ module Colors exposing
     , paused
     , pending
     , pendingFaded
-    , pinHighlight
     , pinIconHover
     , pinTools
     , pinned
@@ -52,6 +51,7 @@ module Colors exposing
     , showArchivedButtonBorder
     , sideBar
     , sideBarActive
+    , sideBarBackground
     , sideBarHovered
     , sideBarTooltipBackground
     , started
@@ -476,14 +476,31 @@ sideBar =
     "#333333"
 
 
+sideBarBackground : String
+sideBarBackground =
+    ColorValues.grey90
+
+
+
+----
+
+
 sideBarActive : String
 sideBarActive =
     "#272727"
 
 
+
+----
+
+
 sideBarHovered : String
 sideBarHovered =
-    "#444444"
+    ColorValues.grey100
+
+
+
+-----
 
 
 errorLog : String
@@ -494,6 +511,10 @@ errorLog =
 retryTabText : String
 retryTabText =
     "#f5f5f5"
+
+
+
+-----
 
 
 statusColor : PipelineStatus -> String
@@ -559,6 +580,10 @@ buildStatusColor isBright status =
 
             BuildStatusAborted ->
                 abortedFaded
+
+
+
+-----
 
 
 buttonDisabledGrey : String

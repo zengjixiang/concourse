@@ -3,6 +3,7 @@ module ResourceTests exposing (all)
 import Application.Application as Application
 import Application.Models exposing (Session)
 import Assets
+import ColorValues
 import Common exposing (defineHoverBehaviour, queryView)
 import Concourse
 import Concourse.BuildStatus exposing (BuildStatus(..))
@@ -2125,7 +2126,7 @@ all =
                             \_ ->
                                 saveButton
                                     |> Query.has
-                                        [ style "border" "1px solid #ffffff"
+                                        [ style "border" ("1px solid " ++ ColorValues.white)
                                         , style "color" "#e6e7e8"
                                         ]
                         , test "has a grey border and text when the comment has not changed" <|
