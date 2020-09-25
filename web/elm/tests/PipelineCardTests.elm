@@ -988,7 +988,7 @@ all =
                         >> Query.has
                             [ style "width" "0"
                             , style "height" "0"
-                            , style "border-top" <| "30px solid " ++ ColorValues.error40
+                            , style "border-top" <| "30px solid " ++ orange
                             , style "border-left" "30px solid transparent"
                             ]
                 ]

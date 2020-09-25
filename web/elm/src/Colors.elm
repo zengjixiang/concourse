@@ -359,7 +359,7 @@ flySuccessTokenCopied =
 
 resourceError : String
 resourceError =
-    ColorValues.error40
+    "#e67e22"
 
 
 
