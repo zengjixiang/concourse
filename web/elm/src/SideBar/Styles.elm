@@ -229,7 +229,7 @@ pipelineName { opacity, weight } =
     , style "padding" "5px 2.5px"
     , style "margin-left" "5px"
     , style "flex-grow" "1"
-    , style "color" "#FFFFFF"
+    , style "color" Colors.white
     , opacityAttr opacity
     , fontWeightAttr weight
     ]
@@ -330,7 +330,7 @@ tooltip top left =
 
 tooltipBody : List (Html.Attribute msg)
 tooltipBody =
-    [ style "background-color" Colors.sideBarTooltipBackground
+    [ style "background-color" Colors.tooltipBackground
     , style "padding-right" "10px"
     , style "font-size" "12px"
     , style "display" "flex"

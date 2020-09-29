@@ -916,7 +916,7 @@ all =
                             |> queryView
                             |> Query.find pinBarTooltipSelector
                             |> Query.has
-                                [ style "background-color" tooltipGreyHex ]
+                                [ style "background-color" ColorValues.grey20 ]
                 , test "pin bar tooltip has a bit of padding around text" <|
                     \_ ->
                         init
@@ -3729,7 +3729,7 @@ versionTooltipSelector : List Selector
 versionTooltipSelector =
     [ style "position" "absolute"
     , style "bottom" "25px"
-    , style "background-color" tooltipGreyHex
+    , style "background-color" ColorValues.grey20
     , style "z-index" "2"
     , style "padding" "5px"
     , style "width" "170px"

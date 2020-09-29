@@ -433,7 +433,7 @@ all =
                         , style "align-items" "center"
                         , containing
                             [ style "font-size" "21px"
-                            , style "color" "#ffffff"
+                            , style "color" ColorValues.white
                             , style "letter-spacing" "0.1em"
                             , style "margin-left" "10px"
                             , containing [ text "foobar" ]

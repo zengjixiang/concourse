@@ -777,7 +777,7 @@ visibilityToggle { public, isClickable, isHovered } =
 
 visibilityTooltip : List (Html.Attribute msg)
 visibilityTooltip =
-    [ style "background-color" Colors.dashboardTooltipBackground
+    [ style "background-color" Colors.tooltipBackground
     , style "white-space" "nowrap"
     , style "padding" "2.5px"
     ]
@@ -785,7 +785,7 @@ visibilityTooltip =
 
 jobsDisabledTooltip : List (Html.Attribute msg)
 jobsDisabledTooltip =
-    [ style "background-color" Colors.dashboardTooltipBackground
+    [ style "background-color" Colors.tooltipBackground
     , style "padding" "2.5px"
     ]
 
@@ -842,7 +842,7 @@ jobPreviewLink =
 clusterName : List (Html.Attribute msg)
 clusterName =
     [ style "font-size" "21px"
-    , style "color" "#ffffff"
+    , style "color" Colors.white
     , style "letter-spacing" "0.1em"
     , style "margin-left" "10px"
     ]

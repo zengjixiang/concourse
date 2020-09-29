@@ -376,7 +376,7 @@ all =
                             >> Query.has
                                 [ style "position" "absolute"
                                 , style "top" "55px"
-                                , style "background-color" backgroundGrey
+                                , style "background-color" ColorValues.grey100
                                 , style "height" topBarHeight
                                 , style "width" "100%"
                                 , style "border-top" <| "1px solid " ++ borderGrey

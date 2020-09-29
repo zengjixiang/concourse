@@ -13,7 +13,6 @@ module Colors exposing
     , cliIconHover
     , dashboardPipelineHeaderText
     , dashboardText
-    , dashboardTooltipBackground
     , dropdownFaded
     , dropdownItemInputText
     , dropdownItemSelectedBackground
@@ -53,7 +52,6 @@ module Colors exposing
     , sideBarActive
     , sideBarBackground
     , sideBarHovered
-    , sideBarTooltipBackground
     , started
     , startedFaded
     , statusColor
@@ -98,11 +96,6 @@ hamburgerClosedBackground =
 border : String
 border =
     ColorValues.black
-
-
-sideBarTooltipBackground : String
-sideBarTooltipBackground =
-    ColorValues.grey20
 
 
 dropdownItemSelectedBackground : String
@@ -167,11 +160,6 @@ pinned =
 
 tooltipBackground : String
 tooltipBackground =
-    "#9b9b9b"
-
-
-dashboardTooltipBackground : String
-dashboardTooltipBackground =
     ColorValues.grey20
 
 
