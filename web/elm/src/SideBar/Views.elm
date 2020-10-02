@@ -40,7 +40,7 @@ viewTeam team =
                    ]
             )
             [ Styles.collapseIcon team.collapseIcon
-            , Styles.teamIcon team.icon
+            , Styles.teamIcon
             , Html.div
                 (Styles.teamName team.name
                     ++ [ id <| toHtmlID team.name.domID ]

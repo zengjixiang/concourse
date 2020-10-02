@@ -78,7 +78,7 @@ pipeline params p =
                 Styles.Dim
         , text = p.name
         , weight =
-            if isCurrent then
+            if isCurrent || isHovered then
                 Styles.Bold
 
             else
