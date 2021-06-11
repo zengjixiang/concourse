@@ -89,6 +89,7 @@ module Concourse exposing
     , retrieveCSRFToken
     , toInstanceGroupId
     , toPipelineId
+    , toVersionedResourceId
     , versionQuery
     )
 
@@ -1134,6 +1135,15 @@ resourceId { teamName, pipelineName, pipelineInstanceVars, name } =
     }
 
 
+resourceIdFromVersionedResourceId : { r | teamName : String, pipelineName : String, pipelineInstanceVars : InstanceVars, resourceName : String } -> ResourceIdentifier
+resourceIdFromVersionedResourceId { teamName, pipelineName, pipelineInstanceVars, resourceName } =
+    { teamName = teamName
+    , pipelineName = pipelineName
+    , pipelineInstanceVars = pipelineInstanceVars
+    , resourceName = resourceName
+    }
+
+
 type alias VersionedResource =
     { id : Int
     , version : Version
@@ -1151,12 +1161,13 @@ type alias VersionedResourceIdentifier =
     }
 
 
-resourceIdFromVersionedResourceId : { r | teamName : String, pipelineName : String, pipelineInstanceVars : InstanceVars, resourceName : String } -> ResourceIdentifier
-resourceIdFromVersionedResourceId { teamName, pipelineName, pipelineInstanceVars, resourceName } =
+toVersionedResourceId : ResourceIdentifier -> VersionedResource -> VersionedResourceIdentifier
+toVersionedResourceId { teamName, pipelineName, pipelineInstanceVars, resourceName } { id } =
     { teamName = teamName
     , pipelineName = pipelineName
     , pipelineInstanceVars = pipelineInstanceVars
     , resourceName = resourceName
+    , versionID = id
     }
 
 
