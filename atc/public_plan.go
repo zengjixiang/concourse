@@ -67,10 +67,6 @@ func (plan *Plan) Public() *json.RawMessage {
 		public.SetPipeline = plan.SetPipeline.Public()
 	}
 
-	if plan.GetVar != nil {
-		public.GetVar = plan.GetVar.Public()
-	}
-
 	if plan.LoadVar != nil {
 		public.LoadVar = plan.LoadVar.Public()
 	}
@@ -304,18 +300,6 @@ func (plan SetPipelinePlan) Public() *json.RawMessage {
 		Name:         plan.Name,
 		Team:         plan.Team,
 		InstanceVars: plan.InstanceVars,
-	})
-}
-
-func (plan GetVarPlan) Public() *json.RawMessage {
-	return enc(struct {
-		Name   string   `json:"name"`
-		Path   string   `json:"path"`
-		Fields []string `json:"fields"`
-	}{
-		Name:   plan.Name,
-		Path:   plan.Path,
-		Fields: plan.Fields,
 	})
 }
 
